@@ -1,0 +1,6 @@
+*.png
+*.jpg
+unknown_faces/
+dataset/
+faceenv/
+logs/
