@@ -1,0 +1,22 @@
+{
+  "name": "attendance-backend-poc",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "mongoose": "^8.8.3",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.9",
+    "socket.io": "^4.7.5",
+    "uuid": "^11.0.3"
+  },
+  "description": "POC Backend for Student Attendance System"
+}
