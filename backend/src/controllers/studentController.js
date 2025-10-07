@@ -12,7 +12,6 @@ const getAllStudents = async (req, res) => {
       rollNumber,
       email,
       name,
-      isActive,
     } = req.query;
 
     const filter = {};
@@ -24,18 +23,15 @@ const getAllStudents = async (req, res) => {
       const regex = new RegExp(name, "i");
       filter.$or = [{ firstName: regex }, { lastName: regex }];
     }
-    if (isActive !== undefined) filter.isActive = isActive === "true";
 
     // Sorting by rollNumber ascending (if numeric strings, cast for sort stability)
     const sort = { rollNumber: 1 };
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const [students, total, classAgg, divisionAgg] = await Promise.all([
+    const [students, total] = await Promise.all([
       Student.find(filter).sort(sort).limit(parseInt(limit)).skip(skip).lean(),
       Student.countDocuments(filter),
-      Student.distinct("class", filter),
-      Student.distinct("division", filter),
     ]);
 
     res.json({
@@ -43,8 +39,6 @@ const getAllStudents = async (req, res) => {
       data: {
         students,
         total,
-        classesCount: classAgg.length,
-        divisionsCount: divisionAgg.length,
         page: parseInt(page),
         pages: Math.ceil(total / parseInt(limit)),
       },
@@ -107,7 +101,6 @@ const registerStudent = async (req, res) => {
         class: studentClass,
         division,
         rollNumber,
-        // faceEncoding
       } = req.body;
 
       // Check if student already exists
@@ -121,9 +114,6 @@ const registerStudent = async (req, res) => {
           message: "Student with this email or roll number already exists",
         });
       }
-
-      // Generate unique student ID
-      // const studentId = `STU${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
       const files = Array.isArray(req.files) ? req.files : [];
       if (!files.length) {
@@ -146,7 +136,6 @@ const registerStudent = async (req, res) => {
         rollNumber,
         photos,
         photoDir,
-        // faceEncoding: faceEncoding ? JSON.parse(faceEncoding) : []
       };
 
       const student = new Student(studentData);
