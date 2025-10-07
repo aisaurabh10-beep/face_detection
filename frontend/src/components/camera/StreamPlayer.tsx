@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { STORAGE_CAMERA_KEY, STORAGE_KEY } from "@/lib/constants";
+import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
 
 type StreamSource = "device" | "actual";
 
@@ -47,6 +48,8 @@ export function StreamPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const stopOverlayTimer = useRef<number | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [streamError, setStreamError] = useState<string>("");
+  const streamInitializedRef = useRef(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isExpanded =
@@ -57,7 +60,6 @@ export function StreamPlayer({
     try {
       const sourceType = window.localStorage.getItem(STORAGE_KEY);
       if (sourceType === "device" || sourceType === "actual") {
-        console.log("sourceType", sourceType);
         setSource(sourceType);
       }
       const savedCam = window.localStorage.getItem(STORAGE_CAMERA_KEY);
@@ -70,7 +72,6 @@ export function StreamPlayer({
     return cameras.find((c) => c.id === selectedCameraId) || cameras[0] || null;
   }, [cameras, selectedCameraId]);
 
-  // Handle detection events to show overlay and pause stream for 2s
   useEffect(() => {
     const show = () => {
       setShowOverlay(true);
@@ -107,6 +108,8 @@ export function StreamPlayer({
 
   const start = useCallback(async () => {
     setIsStreaming(true);
+    setStreamError("");
+
     if (source === "device" && videoRef.current) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -118,21 +121,41 @@ export function StreamPlayer({
       } catch (e) {
         console.error(e);
         setIsStreaming(false);
+        setStreamError("Failed to access device camera");
       }
-    } else if (source === "actual") {
-      if (!selectedCameraId && cameras.length > 0) {
-        const firstId = cameras[0].id;
-        setSelectedCameraId(firstId);
-        try {
-          window.localStorage.setItem(STORAGE_CAMERA_KEY, firstId);
-        } catch {}
+    } else if (source === "actual" && selectedCameraId && videoRef.current) {
+      if (!streamInitializedRef.current) {
+        streamInitializedRef.current = true;
+
+        RTSPtoWebClient.setupStream(
+          selectedCameraId,
+          videoRef.current,
+          () => {
+            console.log("WebRTC stream started successfully!");
+            setIsStreaming(true);
+          },
+          (error) => {
+            console.error("WebRTC stream setup error:", error);
+            setStreamError(`WebRTC stream error: ${error.message}`);
+            setIsStreaming(false);
+            streamInitializedRef.current = false;
+          }
+        );
       }
-      // For iframe sources, rendering is controlled by state; nothing else to start
+    } else if (source === "actual" && !selectedCameraId && cameras.length > 0) {
+      const firstId = cameras[0].id;
+      setSelectedCameraId(firstId);
+      try {
+        window.localStorage.setItem(STORAGE_CAMERA_KEY, firstId);
+      } catch {}
     }
   }, [source, selectedCameraId, cameras]);
 
   const stop = useCallback(() => {
     setIsStreaming(false);
+    streamInitializedRef.current = false;
+    setStreamError("");
+
     if (videoRef.current) {
       try {
         const mediaStream = videoRef.current.srcObject as MediaStream | null;
@@ -150,10 +173,16 @@ export function StreamPlayer({
     if (!isStreaming) return;
     // restart appropriately on source change
     stop();
+    setIsStreaming(false)
     // small delay to release tracks
-    const t = setTimeout(() => start(), 50);
+    const t = setTimeout(() => {
+      // if (source !== "actual") {
+        start();
+        setIsStreaming(true)
+      // }
+    }, 50);
     return () => clearTimeout(t);
-  }, [source]);
+  }, [source, selectedCameraId]);
 
   return (
     <Card
@@ -206,6 +235,7 @@ export function StreamPlayer({
                 } catch {}
               }}
             >
+              <option value="">Select Camera</option>
               {cameras.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -253,21 +283,24 @@ export function StreamPlayer({
             isExpanded ? "h-[calc(100dvh-88px)]" : "aspect-video"
           )}
         >
-          {/* Device stream */}
-          {source === "device" ? (
+          {/* Stream error display */}
+          {streamError && (
+            <div className="absolute top-3 left-3 right-3 z-10">
+              <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-3">
+                <p className="text-sm font-medium">Stream Error</p>
+                <p className="text-xs mt-1">{streamError}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Video stream for both device and actual cameras */}
+          {source === "device" || source === "actual" ? (
             <video
               ref={videoRef}
               className="absolute inset-0 w-full h-full object-cover bg-black"
               playsInline
               muted
               autoPlay
-            />
-          ) : // Actual stream - for now render iframe to provided streaming url
-          selectedCamera?.url ? (
-            <iframe
-              src={selectedCamera.url}
-              className="absolute inset-0 w-full h-full"
-              allow="autoplay; camera; microphone"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
