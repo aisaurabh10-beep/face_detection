@@ -103,6 +103,10 @@ class ApiClient {
     return this.axios.delete(`/students/${id}`);
   }
 
+  async toggleStudentStatus(id: string) {
+    return this.axios.patch(`/students/${id}/toggle-status`);
+  }
+
   // Attendance API
   async markAttendance(attendanceData: {
     studentId: string;

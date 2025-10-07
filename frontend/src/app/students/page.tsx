@@ -4,7 +4,8 @@ import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Users, UserPlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Users, UserPlus, UserMinus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
@@ -22,6 +23,7 @@ export default function StudentsPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     class: "",
     division: "",
@@ -62,6 +64,19 @@ export default function StudentsPage() {
     const list = Object.values(DIVISIONS).flat();
     return Array.from(new Set(list));
   }, []);
+
+  const handleToggleStatus = async (studentId: string) => {
+    setActionLoading(studentId);
+    try {
+      await api.toggleStudentStatus(studentId);
+      // Refresh the students list
+      await fetchStudents();
+    } catch (error) {
+      setErrorMsg("Failed to update student status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   return (
     <MainLayout>
@@ -188,6 +203,8 @@ export default function StudentsPage() {
                       <th className="py-2 pr-2">Class</th>
                       <th className="py-2 pr-2">Division</th>
                       <th className="py-2 pr-2">Roll</th>
+                      <th className="py-2 pr-2">Status</th>
+                      <th className="py-2 pr-2">Actions</th>
                     </tr>
                   </thead>
                 ) : null}
@@ -212,11 +229,45 @@ export default function StudentsPage() {
                       <td className="py-2 pr-2">{s.class}</td>
                       <td className="py-2 pr-2">{s.division}</td>
                       <td className="py-2 pr-2">{s.rollNumber}</td>
+                      <td className="py-2 pr-2">
+                        <Badge
+                          variant={s.isActive ? "default" : "secondary"}
+                          className={
+                            s.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }
+                        >
+                          {s.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </td>
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleToggleStatus(s._id)}
+                            disabled={actionLoading === s._id}
+                            className={`h-8 px-2 ${
+                              s.isActive
+                                ? "text-red-600 hover:text-red-700 hover:bg-red-50"
+                                : "text-green-600 hover:text-green-700 hover:bg-green-50"
+                            }`}
+                            title={s.isActive ? "Make Inactive" : "Make Active"}
+                          >
+                            {s.isActive ? (
+                              <UserMinus className="h-3 w-3" />
+                            ) : (
+                              <UserPlus className="h-3 w-3" />
+                            )}
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                   {!students?.length && !loading && (
                     <tr>
-                      <td colSpan={7} className="py-6 text-center">
+                      <td colSpan={9} className="py-6 text-center">
                         <div className="flex flex-col items-center space-y-3">
                           <Users className="h-12 w-12 text-muted-foreground" />
                           <div className="text-muted-foreground">

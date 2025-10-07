@@ -221,10 +221,57 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+// Toggle student active status
+const toggleStudentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First get the current student to check current status
+    const currentStudent = await Student.findById(id);
+    if (!currentStudent) {
+      return res.status(404).json({
+        error: true,
+        message: "Student not found",
+      });
+    }
+
+    // Toggle the isActive status
+    const newStatus = !currentStudent.isActive;
+    const student = await Student.findByIdAndUpdate(
+      id,
+      { isActive: newStatus },
+      { new: true, runValidators: true }
+    );
+
+    // Emit real-time update
+    req.io.emit("student_updated", {
+      student: student,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
+    });
+
+    res.json({
+      success: true,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
+      data: student,
+    });
+  } catch (error) {
+    console.error("Error toggling student status:", error);
+    res.status(500).json({
+      error: true,
+      message: "Error updating student status",
+    });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
   registerStudent,
   updateStudent,
   deleteStudent,
+  toggleStudentStatus,
 };

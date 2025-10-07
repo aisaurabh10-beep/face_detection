@@ -10,17 +10,20 @@ import { X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CLASSES, getDivisionsForClass } from "@/lib/helper";
-import { MAX_UPLOAD } from "@/lib/constants";
+import { MAX_UPLOAD, CAMERAS } from "@/lib/constants";
+import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
 
 export default function RegisterStudentPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLVideoElement | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [capturedBlobs, setCapturedBlobs] = useState<Blob[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [successMsg, setSuccessMsg] = useState<string>("");
+  const [streamError, setStreamError] = useState<string>("");
+  const streamInitializedRef = useRef(false);
 
   console.log("capturedBlobs", capturedBlobs);
 
@@ -67,37 +70,110 @@ export default function RegisterStudentPage() {
     setForm((prev) => ({ ...prev, photoFiles: nextFiles }));
   };
 
+  // Device camera functions (commented out)
+  // const startCamera = useCallback(async () => {
+  //   try {
+  //     const media = await navigator.mediaDevices.getUserMedia({ video: true });
+  //     if (videoRef.current) {
+  //       videoRef.current.srcObject = media as MediaStream;
+  //       await videoRef.current.play();
+  //       setStreaming(true);
+  //     }
+  //   } catch (err) {
+  //     setErrorMsg("Unable to access camera");
+  //   }
+  // }, []);
+
+  // const stopCamera = useCallback(() => {
+  //   const stream = videoRef.current?.srcObject as MediaStream | undefined;
+  //   stream?.getTracks().forEach((t) => t.stop());
+  //   setStreaming(false);
+  // }, []);
+
+  // Actual camera functions
   const startCamera = useCallback(async () => {
-    try {
-      const media = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = media as MediaStream;
-        await videoRef.current.play();
-        setStreaming(true);
-      }
-    } catch (err) {
-      setErrorMsg("Unable to access camera");
+    if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
+      return;
+
+    const firstCamera = CAMERAS[0];
+    if (!firstCamera) {
+      setStreamError("No cameras available");
+      return;
     }
+
+    streamInitializedRef.current = true;
+    setStreamError("");
+
+    RTSPtoWebClient.setupStream(
+      firstCamera.id,
+      videoRef.current,
+      () => {
+        console.log("WebRTC stream started successfully!");
+        setStreaming(true);
+
+        // Use setTimeout to ensure stream is fully established
+        setTimeout(() => {
+          // Also set the stream to the second video element
+          if (canvasRef.current && videoRef.current?.srcObject) {
+            console.log("Setting stream to second video element");
+            canvasRef.current.srcObject = videoRef.current.srcObject;
+            canvasRef.current.play().catch(console.error);
+          } else {
+            console.log("Canvas ref or video srcObject not available", {
+              canvasRef: !!canvasRef.current,
+              videoSrcObject: !!videoRef.current?.srcObject,
+            });
+          }
+        }, 100);
+      },
+      (error) => {
+        console.error("WebRTC stream setup error:", error);
+        setStreamError(`WebRTC stream error: ${error.message}`);
+        setStreaming(false);
+        streamInitializedRef.current = false;
+      }
+    );
   }, []);
 
   const stopCamera = useCallback(() => {
-    const stream = videoRef.current?.srcObject as MediaStream | undefined;
-    stream?.getTracks().forEach((t) => t.stop());
     setStreaming(false);
+    streamInitializedRef.current = false;
+    setStreamError("");
+
+    if (videoRef.current) {
+      try {
+        const mediaStream = videoRef.current.srcObject as MediaStream | null;
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((t) => t.stop());
+        }
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      } catch {}
+    }
+
+    if (canvasRef.current) {
+      try {
+        canvasRef.current.pause();
+        canvasRef.current.srcObject = null;
+      } catch {}
+    }
   }, []);
 
   const captureFrame = useCallback(() => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current) return;
     const totalCount = (form.photoFiles?.length || 0) + capturedBlobs.length;
     if (totalCount >= MAX_UPLOAD) return;
+
+    // Create a temporary canvas for capturing
+    const tempCanvas = document.createElement("canvas");
     const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
+    tempCanvas.width = video.videoWidth;
+    tempCanvas.height = video.videoHeight;
+    const ctx = tempCanvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob(
+
+    ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+    tempCanvas.toBlob(
       (blob) => {
         if (blob) {
           setCapturedBlobs((prev) => {
@@ -309,7 +385,9 @@ export default function RegisterStudentPage() {
                   onClick={streaming ? stopCamera : startCamera}
                   type="button"
                 >
-                  {streaming ? "Stop Camera" : "Start Camera"}
+                  {streaming
+                    ? "Stop Camera"
+                    : `Start ${CAMERAS[0]?.name || "Camera"}`}
                 </Button>
                 <Button
                   onClick={captureFrame}
@@ -340,15 +418,33 @@ export default function RegisterStudentPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
+                  {/* Stream error display */}
+                  {streamError && (
+                    <div className="absolute top-2 left-2 right-2 z-10">
+                      <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-2">
+                        <p className="text-xs font-medium">Stream Error</p>
+                        <p className="text-xs mt-1">{streamError}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
                     muted
                     playsInline
+                    autoPlay
                   />
                 </div>
                 <div className="relative w-full aspect-video rounded-md overflow-hidden p-3">
-                  <canvas ref={canvasRef} className="hidden" />
+                  {/* <canvas ref={canvasRef} className="hidden" /> */}
+                  <video
+                    ref={canvasRef}
+                    className="w-full h-full object-cover border rounded-md bg-muted hidden"
+                    muted
+                    playsInline
+                    autoPlay
+                  />
                   <div className="grid grid-cols-3 gap-3">
                     {capturedBlobs.map((blob, idx) => (
                       <div
