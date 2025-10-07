@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CLASSES, getDivisionsForClass } from "@/lib/helper";
 import { MAX_UPLOAD } from "@/lib/constants";
 
 export default function RegisterStudentPage() {
+  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -110,15 +112,10 @@ export default function RegisterStudentPage() {
     );
   }, [form.photoFiles, capturedBlobs.length]);
 
+  console.log("form.photoFiles", form.photoFiles);
+
   const removeCapturedAt = (idx: number) => {
     setCapturedBlobs((prev) => prev.filter((_, i) => i !== idx));
-  };
-
-  const removeFileAt = (idx: number) => {
-    setForm((prev) => ({
-      ...prev,
-      photoFiles: (prev.photoFiles || []).filter((_, i) => i !== idx),
-    }));
   };
 
   const submitForm = useCallback(async () => {
@@ -128,7 +125,9 @@ export default function RegisterStudentPage() {
       setErrorMsg("Please fill all fields and add a photo");
       return;
     }
+    stopCamera();
     setSubmitting(true);
+
     try {
       const fd = new FormData();
       fd.append("studentId", form.studentId);
@@ -142,7 +141,7 @@ export default function RegisterStudentPage() {
 
       const toUpload: File[] = [];
       // Add captured blobs as Files
-      if (capturedBlobs) {
+      if (capturedBlobs.length > 0) {
         capturedBlobs.forEach((blob, idx) => {
           const file = new File([blob], `capture_${idx + 1}.jpg`, {
             type: "image/jpeg",
@@ -150,7 +149,13 @@ export default function RegisterStudentPage() {
           console.log("adding file", file);
           toUpload.push(file);
         });
+      } else if (form.photoFiles.length > 0) {
+        console.log("adding form.photoFiles", form.photoFiles);
+        form.photoFiles.forEach((file, idx) => {
+          toUpload.push(file);
+        });
       }
+
       if (toUpload.length === 0) {
         setErrorMsg("Please add at least one photo");
         setSubmitting(false);
@@ -183,6 +188,11 @@ export default function RegisterStudentPage() {
         photoFiles: [],
       });
       setCapturedBlobs([]);
+
+      // Navigate back to students page after a short delay
+      setTimeout(() => {
+        router.push("/students");
+      }, 1500);
     } catch (e) {
       setErrorMsg("Registration failed. Please verify inputs.");
     } finally {
@@ -304,7 +314,11 @@ export default function RegisterStudentPage() {
                 <Button
                   onClick={captureFrame}
                   type="button"
-                  disabled={capturedBlobs.length >= MAX_UPLOAD || !streaming}
+                  disabled={
+                    capturedBlobs.length >= MAX_UPLOAD ||
+                    !streaming ||
+                    (form.photoFiles && form.photoFiles.length > 0)
+                  }
                 >
                   Capture
                 </Button>
@@ -333,28 +347,9 @@ export default function RegisterStudentPage() {
                     playsInline
                   />
                 </div>
-                <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden p-3">
+                <div className="relative w-full aspect-video rounded-md overflow-hidden p-3">
                   <canvas ref={canvasRef} className="hidden" />
                   <div className="grid grid-cols-3 gap-3">
-                    {/* {(form.photoFiles || []).map((file, idx) => (
-                      <div
-                        key={`file-${idx}`}
-                        className="relative w-full aspect-square bg-background rounded-md overflow-hidden"
-                      >
-                        <img
-                          src={URL.createObjectURL(file)}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeFileAt(idx)}
-                          className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white"
-                          aria-label="Remove image"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))} */}
                     {capturedBlobs.map((blob, idx) => (
                       <div
                         key={`cap-${idx}`}

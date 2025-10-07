@@ -69,7 +69,6 @@ class ApiClient {
     rollNumber?: string;
     email?: string;
     name?: string;
-    isActive?: boolean;
   }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
@@ -80,8 +79,6 @@ class ApiClient {
       searchParams.append("rollNumber", params.rollNumber);
     if (params?.email) searchParams.append("email", params.email);
     if (params?.name) searchParams.append("name", params.name);
-    if (params?.isActive !== undefined)
-      searchParams.append("isActive", params.isActive.toString());
 
     const query = searchParams.toString();
     const url = `/students${query ? `?${query}` : ""}`;

@@ -7,7 +7,6 @@ const {
   updateStudent,
   deleteStudent,
 } = require("../controllers/studentController");
-const { validateStudent } = require("../middleware/validation");
 
 router.get("/", getAllStudents);
 router.get("/:id", getStudentById);

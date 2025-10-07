@@ -173,12 +173,12 @@ export function StreamPlayer({
     if (!isStreaming) return;
     // restart appropriately on source change
     stop();
-    setIsStreaming(false)
+    setIsStreaming(false);
     // small delay to release tracks
     const t = setTimeout(() => {
       // if (source !== "actual") {
-        start();
-        setIsStreaming(true)
+      start();
+      setIsStreaming(true);
       // }
     }, 50);
     return () => clearTimeout(t);

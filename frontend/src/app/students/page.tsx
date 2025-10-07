@@ -20,10 +20,8 @@ export default function StudentsPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [students, setStudents] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
-  const [classesCount, setClassesCount] = useState(0);
-  const [divisionsCount, setDivisionsCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [filters, setFilters] = useState({
     class: "",
     division: "",
@@ -48,8 +46,6 @@ export default function StudentsPage() {
       const data = res.data?.data;
       setStudents(data?.students || []);
       setTotal(data?.total || 0);
-      setClassesCount(data?.classesCount || 0);
-      setDivisionsCount(data?.divisionsCount || 0);
     } catch (e) {
       setErrorMsg("Failed to load students");
     } finally {
@@ -62,7 +58,7 @@ export default function StudentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit]);
 
-  const allUniqueDivisions = useMemo(() => {
+  const availableDivisions = useMemo(() => {
     const list = Object.values(DIVISIONS).flat();
     return Array.from(new Set(list));
   }, []);
@@ -93,7 +89,7 @@ export default function StudentsPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search students by name"
+                  placeholder="Search by name"
                   className="pl-10"
                   value={filters.name}
                   onChange={(e) =>
@@ -106,11 +102,9 @@ export default function StudentsPage() {
                   className="h-9 w-full px-3 border rounded-md bg-background text-sm"
                   value={filters.class}
                   onChange={(e) => {
-                    const nextClass = e.target.value;
                     setFilters((f) => ({
                       ...f,
-                      class: nextClass,
-                      division: "",
+                      class: e.target.value,
                     }));
                   }}
                 >
@@ -131,7 +125,7 @@ export default function StudentsPage() {
                   }
                 >
                   <option value="">All Divisions</option>
-                  {allUniqueDivisions.map((d) => (
+                  {availableDivisions.map((d) => (
                     <option key={d} value={d}>
                       {d}
                     </option>
@@ -184,17 +178,20 @@ export default function StudentsPage() {
             {/* List */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground">
-                    <th className="py-2 pr-2">Photo</th>
-                    <th className="py-2 pr-2">Student ID</th>
-                    <th className="py-2 pr-2">Name</th>
-                    <th className="py-2 pr-2">Email</th>
-                    <th className="py-2 pr-2">Class</th>
-                    <th className="py-2 pr-2">Division</th>
-                    <th className="py-2 pr-2">Roll</th>
-                  </tr>
-                </thead>
+                {students.length ? (
+                  <thead>
+                    <tr className="text-left text-muted-foreground">
+                      <th className="py-2 pr-2">Photo</th>
+                      <th className="py-2 pr-2">Student ID</th>
+                      <th className="py-2 pr-2">Name</th>
+                      <th className="py-2 pr-2">Email</th>
+                      <th className="py-2 pr-2">Class</th>
+                      <th className="py-2 pr-2">Division</th>
+                      <th className="py-2 pr-2">Roll</th>
+                    </tr>
+                  </thead>
+                ) : null}
+
                 <tbody>
                   {(students || []).map((s) => (
                     <tr key={s._id} className="border-t">
@@ -219,11 +216,24 @@ export default function StudentsPage() {
                   ))}
                   {!students?.length && !loading && (
                     <tr>
-                      <td
-                        colSpan={7}
-                        className="py-6 text-center text-muted-foreground"
-                      >
-                        No students found
+                      <td colSpan={7} className="py-6 text-center">
+                        <div className="flex flex-col items-center space-y-3">
+                          <Users className="h-12 w-12 text-muted-foreground" />
+                          <div className="text-muted-foreground">
+                            <p className="text-lg font-medium">
+                              No students found
+                            </p>
+                            <p className="text-sm">
+                              Get started by registering your first student
+                            </p>
+                          </div>
+                          <Link href="/students/register">
+                            <Button className="flex items-center gap-2">
+                              <UserPlus className="h-4 w-4" />
+                              Register First Student
+                            </Button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -232,27 +242,30 @@ export default function StudentsPage() {
             </div>
 
             {/* Pagination */}
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Page {page} of {Math.max(1, Math.ceil(total / limit))}
+
+            {students.length ? (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Page {page} of {Math.max(1, Math.ceil(total / limit))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={page >= Math.ceil(total / limit)}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={page >= Math.ceil(total / limit)}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
