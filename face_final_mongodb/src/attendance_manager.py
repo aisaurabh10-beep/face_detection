@@ -1,42 +1,35 @@
-import os
 import logging
-import pandas as pd
 import datetime
+from pymongo.collection import Collection
 
-def mark_attendance(name, yolo_conf, deepface_dist, config):
+def mark_attendance(name: str, yolo_conf: float, deepface_dist: float, collection: Collection, config):
     """
-    Records a person's attendance in a CSV file, checking for recent entries.
-    
+    Records a person's attendance in a MongoDB collection, checking for recent entries.
+
     Args:
         name (str): The name of the person.
         yolo_conf (float): The YOLO detection confidence score.
         deepface_dist (float): The DeepFace distance score.
+        collection (Collection): The MongoDB collection object for attendance.
         config: The application configuration object.
     """
     now = datetime.datetime.now()
-    csv_file = config.get('Paths', 'attendance_file')
     mark_minutes = config.getint('Performance', 'attendance_mark_minutes')
+    time_limit = now - datetime.timedelta(minutes=mark_minutes)
 
-    csv_columns = ["Name", "Date", "Time", "YOLO_Confidence", "DeepFace_Distance"]
+    # 1. Query MongoDB for a recent entry for this person
+    recent_entry = collection.find_one({
+        "name": name,
+        "timestamp": {"$gt": time_limit}
+    })
 
-    if not os.path.exists(csv_file):
-        df = pd.DataFrame(columns=csv_columns)
-        df.to_csv(csv_file, index=False)
-
-    df = pd.read_csv(csv_file)
-    marked_recently = False
-    if not df.empty and 'Date' in df.columns:
-        df['Timestamp'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], errors='coerce')
-        time_limit = now - datetime.timedelta(minutes=mark_minutes)
-        recent_entries = df[(df['Name'] == name) & (df['Timestamp'] > time_limit)]
-        marked_recently = not recent_entries.empty
-
-    if not marked_recently:
-        new_entry = pd.DataFrame([[
-            name, now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S"),
-            f"{yolo_conf:.2f}", f"{deepface_dist:.2f}"
-        ]], columns=csv_columns)
-        
-        df_updated = pd.concat([df.drop(columns=['Timestamp'], errors='ignore'), new_entry], ignore_index=True)
-        df_updated.to_csv(csv_file, index=False)
-        logging.info(f"Attendance Marked: {name}")
+    # 2. If no recent entry is found, insert a new one
+    if recent_entry is None:
+        attendance_record = {
+            "name": name,
+            "timestamp": now,
+            "yolo_confidence": float(f"{yolo_conf:.2f}"),
+            "deepface_distance": float(f"{deepface_dist:.2f}")
+        }
+        collection.insert_one(attendance_record)
+        logging.info(f"Attendance Marked in MongoDB for: {name}")

@@ -1,6 +1,7 @@
 import cv2
 import time
 import logging
+import pymongo # <-- Import pymongo
 from src.config_loader import load_config
 from src.logger_setup import setup_logger
 from src.model_loader import initialize_models_and_db
@@ -20,13 +21,34 @@ def run_pipeline():
     except Exception as e:
         logging.critical(f"Failed to initialize models: {e}", exc_info=True)
         return
+    
 
-    # 3. Setup Pipeline Components
-    processor = FaceProcessor(yolo_model, embeddings_db, names, config)
+        # --- MODIFICATION START ---
+    # 3. Connect to MongoDB and get the attendance collection
+    try:
+        mongo_uri = config.get('MongoDB', 'uri')
+        db_name = config.get('MongoDB', 'database_name')
+        attendance_collection_name = config.get('MongoDB', 'attendance_collection_name')
+        
+        client = pymongo.MongoClient(mongo_uri)
+        db = client[db_name]
+        attendance_collection = db[attendance_collection_name]
+        # Create an index for faster lookups on recent attendance
+        attendance_collection.create_index([("name", 1), ("timestamp", -1)])
+        logging.info("Successfully connected to MongoDB for attendance tracking.")
+    except pymongo.errors.ConnectionFailure as e:
+        logging.critical(f"Failed to connect to MongoDB for attendance: {e}")
+        return
+
+    # 4. Setup Pipeline Components
+    processor = FaceProcessor(yolo_model, embeddings_db, names, config, attendance_collection)
     rtsp_url = config.get('Camera', 'rtsp_url')
+    # rtsp_url = '0'
+
     # Check if URL is a number (for webcam)
     stream_src = int(rtsp_url) if rtsp_url.isdigit() else rtsp_url
     
+
     stream = None
     try:
         stream = VideoStream(stream_src).start()

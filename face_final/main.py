@@ -28,6 +28,8 @@ def run_pipeline():
     stream_src = int(rtsp_url) if rtsp_url.isdigit() else rtsp_url
     
     stream = None
+
+    
     try:
         stream = VideoStream(stream_src).start()
         logging.info("Video stream started successfully.")

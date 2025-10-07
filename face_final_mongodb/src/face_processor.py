@@ -10,11 +10,12 @@ from src.attendance_manager import mark_attendance
 
 class FaceProcessor:
     """Manages the face detection and recognition pipeline for each frame."""
-    def __init__(self, yolo_model, embeddings_db, names, config):
+    def __init__(self, yolo_model, embeddings_db, names, config,attendance_collection):
         self.yolo_model = yolo_model
         self.embeddings_db = embeddings_db
         self.names = names
         self.config = config
+        self.attendance_collection = attendance_collection # Store the collection object
         self.last_unknown_capture_time = 0
         
         # Load settings from config
@@ -80,7 +81,7 @@ class FaceProcessor:
 
             if distance < self.dist_thresh:
                 name = self.names[best_idx]
-                mark_attendance(name, yolo_conf, distance, self.config)
+                mark_attendance(name, yolo_conf, distance, self.attendance_collection, self.config)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.putText(frame, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             else:
