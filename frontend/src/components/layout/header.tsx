@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate, formatTime } from "@/lib/utils";
 import { getPageName } from "@/lib/helper";
 import { useSocket } from "@/lib/socket";

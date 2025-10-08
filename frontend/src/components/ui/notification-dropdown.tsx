@@ -11,7 +11,6 @@ import {
   Bell,
   Camera,
   Clock,
-  MapPin,
   CheckCircle2,
   AlertTriangle,
   MoreHorizontal,

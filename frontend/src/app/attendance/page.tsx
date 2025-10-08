@@ -1,21 +1,14 @@
 "use client";
 
-import { MainLayout } from "@/components/layout/main-layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, ArrowUpDown, Users } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import {
-  getPicUrl,
-  CLASSES,
-  getDivisionsForClass,
-  DIVISIONS,
-} from "@/lib/helper";
 import { ExportButton } from "@/components/attendance/ExportButton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
+import { CLASSES, DIVISIONS, getPicUrl } from "@/lib/helper";
+import { ArrowUpDown, Search, Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 interface AttendanceReport {
   student: {
@@ -54,11 +47,11 @@ type SortOrder = "asc" | "desc";
 export default function AttendancePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [, setErrorMsg] = useState("");
   const [attendanceData, setAttendanceData] = useState<AttendanceReport[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const limit = 10;
   const [filters, setFilters] = useState({
     class: "",
     division: "",
@@ -160,6 +153,7 @@ export default function AttendancePage() {
       setAttendanceData(data?.reports || []);
       setTotal(data?.total || 0);
     } catch (e) {
+      console.error("Failed to load attendance data:", e);
       setErrorMsg("Failed to load attendance data");
     } finally {
       setLoading(false);
@@ -241,339 +235,335 @@ export default function AttendancePage() {
   );
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted-foreground">
-              View and analyze student attendance records
-            </p>
-          </div>
-          <ExportButton
-            filters={filters}
-            dateRange={dateRange}
-            customStartDate={customStartDate}
-            customEndDate={customEndDate}
-            sortBy={sortBy}
-            sortOrder={sortOrder}
-            onError={setErrorMsg}
-          />
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-muted-foreground">
+            View and analyze student attendance records
+          </p>
         </div>
+        <ExportButton
+          filters={filters}
+          dateRange={dateRange}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onError={setErrorMsg}
+        />
+      </div>
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Filters & Date Range</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name"
-                  className="pl-10"
-                  value={filters.name}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, name: e.target.value }))
-                  }
-                />
-              </div>
-              <div>
-                <select
-                  className="h-9 w-full px-3 border rounded-md bg-background text-sm"
-                  value={filters.class}
-                  onChange={(e) => {
-                    setFilters((f) => ({
-                      ...f,
-                      class: e.target.value,
-                      division: "", // Reset division when class changes
-                    }));
-                  }}
-                >
-                  <option value="">All Classes</option>
-                  {CLASSES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <select
-                  className="h-9 w-full px-3 border rounded-md bg-background text-sm"
-                  value={filters.division}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, division: e.target.value }))
-                  }
-                >
-                  <option value="">All Divisions</option>
-                  {availableDivisions.map((d) => (
-                    <option key={d} value={d}>
-                      {d}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filters & Date Range</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Roll Number"
-                value={filters.rollNumber}
+                placeholder="Search by name"
+                className="pl-10"
+                value={filters.name}
                 onChange={(e) =>
-                  setFilters((f) => ({ ...f, rollNumber: e.target.value }))
+                  setFilters((f) => ({ ...f, name: e.target.value }))
                 }
               />
+            </div>
+            <div>
+              <select
+                className="h-9 w-full px-3 border rounded-md bg-background text-sm"
+                value={filters.class}
+                onChange={(e) => {
+                  setFilters((f) => ({
+                    ...f,
+                    class: e.target.value,
+                    division: "", // Reset division when class changes
+                  }));
+                }}
+              >
+                <option value="">All Classes</option>
+                {CLASSES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <select
+                className="h-9 w-full px-3 border rounded-md bg-background text-sm"
+                value={filters.division}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, division: e.target.value }))
+                }
+              >
+                <option value="">All Divisions</option>
+                {availableDivisions.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Input
+              placeholder="Roll Number"
+              value={filters.rollNumber}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, rollNumber: e.target.value }))
+              }
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPage(1);
+                  fetchAttendanceData();
+                }}
+              >
+                Apply
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setFilters({
+                    class: "",
+                    division: "",
+                    rollNumber: "",
+                    name: "",
+                  });
+                  setPage(1);
+                  fetchAttendanceData();
+                }}
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* Date Range Selection */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-48">
+              <select
+                className="h-9 w-full px-3 border rounded-md bg-background text-sm"
+                value={dateRange}
+                onChange={(e) =>
+                  setDateRange(e.target.value as DateRangeOption)
+                }
+              >
+                <option value="current-month">Current Month</option>
+                <option value="last-month">Last Month</option>
+                <option value="last-3-months">Last 3 Months</option>
+                <option value="last-6-months">Last 6 Months</option>
+                <option value="current-year">Current Year</option>
+                <option value="last-year">Last Year</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            {dateRange === "custom" && (
+              <>
+                <div className="w-40">
+                  <Input
+                    type="date"
+                    placeholder="Start Date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="[&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+                <div className="w-40">
+                  <Input
+                    type="date"
+                    placeholder="End Date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="[&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Sort Options */}
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm font-medium">Sort by:</span>
+            <select
+              className="h-8 px-2 border rounded-md bg-background text-sm"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+            >
+              <option value="rollNumber">Roll Number</option>
+              <option value="name">Name</option>
+              <option value="presentPercentage">Present %</option>
+              <option value="absentPercentage">Absent %</option>
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              className="h-8 px-2"
+            >
+              <ArrowUpDown className="h-3 w-3" />
+              {sortOrder === "asc" ? "↑" : "↓"}
+            </Button>
+          </div>
+
+          {/* Attendance Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              {sortedData.length ? (
+                <thead>
+                  <tr className="text-left text-muted-foreground">
+                    <th className="py-2 pr-2">Photo</th>
+                    <th
+                      className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort("name")}
+                    >
+                      Name{" "}
+                      {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="py-2 pr-2">Class</th>
+                    <th className="py-2 pr-2">Division</th>
+                    <th
+                      className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort("rollNumber")}
+                    >
+                      Roll Number{" "}
+                      {sortBy === "rollNumber" &&
+                        (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="py-2 pr-2">Working Days</th>
+                    <th
+                      className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort("presentPercentage")}
+                    >
+                      Present Days{" "}
+                      {sortBy === "presentPercentage" &&
+                        (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleSort("absentPercentage")}
+                    >
+                      Absent Days{" "}
+                      {sortBy === "absentPercentage" &&
+                        (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="py-2 pr-2">Attendance Chart</th>
+                  </tr>
+                </thead>
+              ) : null}
+
+              <tbody>
+                {sortedData.map((report) => (
+                  <tr
+                    key={report.student._id}
+                    className="border-t cursor-pointer hover:bg-gray-900 transition-colors"
+                    onClick={() => handleRowClick(report.student._id)}
+                  >
+                    <td className="py-2 pr-2">
+                      <div className="w-10 h-10 rounded overflow-hidden bg-muted">
+                        <img
+                          src={getPicUrl(
+                            (report.student.photos &&
+                              report.student.photos[0]) ||
+                              ""
+                          )}
+                          alt=""
+                          className="w-10 h-10 object-cover"
+                        />
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      {report.student.firstName} {report.student.lastName}
+                    </td>
+                    <td className="py-2 pr-2">{report.student.class}</td>
+                    <td className="py-2 pr-2">{report.student.division}</td>
+                    <td className="py-2 pr-2">{report.student.rollNumber}</td>
+                    <td className="py-2 pr-2">
+                      <span className="font-medium text-blue-600">
+                        {report.totalDays}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-600 font-medium">
+                          {report.presentDays}
+                        </span>
+                        <span className="text-muted-foreground">
+                          ({report.presentPercentage.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-600 font-medium">
+                          {report.absentDays}
+                        </span>
+                        <span className="text-muted-foreground">
+                          ({report.absentPercentage.toFixed(1)}%)
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2 pr-2">
+                      <div className="w-32">
+                        <ProgressBar
+                          present={report.presentPercentage}
+                          absent={report.absentPercentage}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!sortedData?.length && !loading && (
+                  <tr>
+                    <td colSpan={9} className="py-6 text-center">
+                      <div className="flex flex-col items-center space-y-3">
+                        <Users className="h-12 w-12 text-muted-foreground" />
+                        <div className="text-muted-foreground">
+                          <p className="text-lg font-medium">
+                            No attendance data found
+                          </p>
+                          <p className="text-sm">
+                            Try adjusting your filters or date range
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {sortedData.length ? (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Page {page} of {Math.max(1, Math.ceil(total / limit))}
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setPage(1);
-                    fetchAttendanceData();
-                  }}
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  Apply
+                  Prev
                 </Button>
                 <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setFilters({
-                      class: "",
-                      division: "",
-                      rollNumber: "",
-                      name: "",
-                    });
-                    setPage(1);
-                    fetchAttendanceData();
-                  }}
+                  variant="outline"
+                  disabled={page >= Math.ceil(total / limit)}
+                  onClick={() => setPage((p) => p + 1)}
                 >
-                  Reset
+                  Next
                 </Button>
               </div>
             </div>
-
-            {/* Date Range Selection */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-48">
-                <select
-                  className="h-9 w-full px-3 border rounded-md bg-background text-sm"
-                  value={dateRange}
-                  onChange={(e) =>
-                    setDateRange(e.target.value as DateRangeOption)
-                  }
-                >
-                  <option value="current-month">Current Month</option>
-                  <option value="last-month">Last Month</option>
-                  <option value="last-3-months">Last 3 Months</option>
-                  <option value="last-6-months">Last 6 Months</option>
-                  <option value="current-year">Current Year</option>
-                  <option value="last-year">Last Year</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-              </div>
-              {dateRange === "custom" && (
-                <>
-                  <div className="w-40">
-                    <Input
-                      type="date"
-                      placeholder="Start Date"
-                      value={customStartDate}
-                      onChange={(e) => setCustomStartDate(e.target.value)}
-                      className="[&::-webkit-calendar-picker-indicator]:invert"
-                    />
-                  </div>
-                  <div className="w-40">
-                    <Input
-                      type="date"
-                      placeholder="End Date"
-                      value={customEndDate}
-                      onChange={(e) => setCustomEndDate(e.target.value)}
-                      className="[&::-webkit-calendar-picker-indicator]:invert"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Sort Options */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-sm font-medium">Sort by:</span>
-              <select
-                className="h-8 px-2 border rounded-md bg-background text-sm"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-              >
-                <option value="rollNumber">Roll Number</option>
-                <option value="name">Name</option>
-                <option value="presentPercentage">Present %</option>
-                <option value="absentPercentage">Absent %</option>
-              </select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                }
-                className="h-8 px-2"
-              >
-                <ArrowUpDown className="h-3 w-3" />
-                {sortOrder === "asc" ? "↑" : "↓"}
-              </Button>
-            </div>
-
-            {/* Attendance Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                {sortedData.length ? (
-                  <thead>
-                    <tr className="text-left text-muted-foreground">
-                      <th className="py-2 pr-2">Photo</th>
-                      <th
-                        className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort("name")}
-                      >
-                        Name{" "}
-                        {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
-                      </th>
-                      <th className="py-2 pr-2">Class</th>
-                      <th className="py-2 pr-2">Division</th>
-                      <th
-                        className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort("rollNumber")}
-                      >
-                        Roll Number{" "}
-                        {sortBy === "rollNumber" &&
-                          (sortOrder === "asc" ? "↑" : "↓")}
-                      </th>
-                      <th className="py-2 pr-2">Working Days</th>
-                      <th
-                        className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort("presentPercentage")}
-                      >
-                        Present Days{" "}
-                        {sortBy === "presentPercentage" &&
-                          (sortOrder === "asc" ? "↑" : "↓")}
-                      </th>
-                      <th
-                        className="py-2 pr-2 cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleSort("absentPercentage")}
-                      >
-                        Absent Days{" "}
-                        {sortBy === "absentPercentage" &&
-                          (sortOrder === "asc" ? "↑" : "↓")}
-                      </th>
-                      <th className="py-2 pr-2">Attendance Chart</th>
-                    </tr>
-                  </thead>
-                ) : null}
-
-                <tbody>
-                  {sortedData.map((report) => (
-                    <tr
-                      key={report.student._id}
-                      className="border-t cursor-pointer hover:bg-gray-900 transition-colors"
-                      onClick={() => handleRowClick(report.student._id)}
-                    >
-                      <td className="py-2 pr-2">
-                        <div className="w-10 h-10 rounded overflow-hidden bg-muted">
-                          <img
-                            src={getPicUrl(
-                              (report.student.photos &&
-                                report.student.photos[0]) ||
-                                ""
-                            )}
-                            alt=""
-                            className="w-10 h-10 object-cover"
-                          />
-                        </div>
-                      </td>
-                      <td className="py-2 pr-2">
-                        {report.student.firstName} {report.student.lastName}
-                      </td>
-                      <td className="py-2 pr-2">{report.student.class}</td>
-                      <td className="py-2 pr-2">{report.student.division}</td>
-                      <td className="py-2 pr-2">{report.student.rollNumber}</td>
-                      <td className="py-2 pr-2">
-                        <span className="font-medium text-blue-600">
-                          {report.totalDays}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-600 font-medium">
-                            {report.presentDays}
-                          </span>
-                          <span className="text-muted-foreground">
-                            ({report.presentPercentage.toFixed(1)}%)
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-red-600 font-medium">
-                            {report.absentDays}
-                          </span>
-                          <span className="text-muted-foreground">
-                            ({report.absentPercentage.toFixed(1)}%)
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-2 pr-2">
-                        <div className="w-32">
-                          <ProgressBar
-                            present={report.presentPercentage}
-                            absent={report.absentPercentage}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {!sortedData?.length && !loading && (
-                    <tr>
-                      <td colSpan={9} className="py-6 text-center">
-                        <div className="flex flex-col items-center space-y-3">
-                          <Users className="h-12 w-12 text-muted-foreground" />
-                          <div className="text-muted-foreground">
-                            <p className="text-lg font-medium">
-                              No attendance data found
-                            </p>
-                            <p className="text-sm">
-                              Try adjusting your filters or date range
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {sortedData.length ? (
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-muted-foreground">
-                  Page {page} of {Math.max(1, Math.ceil(total / limit))}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={page >= Math.ceil(total / limit)}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
-    </MainLayout>
+          ) : null}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

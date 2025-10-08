@@ -1,16 +1,24 @@
 "use client";
 
 import StreamPlayer from "@/components/camera/StreamPlayer";
-import { MainLayout } from "@/components/layout/main-layout";
 import { CAMERAS } from "@/lib/constants";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function CamerasPage() {
+function StreamContent() {
   const searchParams = useSearchParams();
   const expand = searchParams.get("expand") === "true";
 
   const content = <StreamPlayer cameras={CAMERAS} />;
   if (expand) return content;
 
-  return <MainLayout>{content}</MainLayout>;
+  return content;
+}
+
+export default function CamerasPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <StreamContent />
+    </Suspense>
+  );
 }

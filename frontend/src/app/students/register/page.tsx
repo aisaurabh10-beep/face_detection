@@ -1,13 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { MainLayout } from "@/components/layout/main-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CLASSES, getDivisionsForClass } from "@/lib/helper";
 import { MAX_UPLOAD, CAMERAS } from "@/lib/constants";
@@ -24,8 +22,6 @@ export default function RegisterStudentPage() {
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
-
-  console.log("capturedBlobs", capturedBlobs);
 
   const [form, setForm] = useState({
     studentId: "",
@@ -108,21 +104,15 @@ export default function RegisterStudentPage() {
       firstCamera.id,
       videoRef.current,
       () => {
-        console.log("WebRTC stream started successfully!");
         setStreaming(true);
 
         // Use setTimeout to ensure stream is fully established
         setTimeout(() => {
           // Also set the stream to the second video element
           if (canvasRef.current && videoRef.current?.srcObject) {
-            console.log("Setting stream to second video element");
             canvasRef.current.srcObject = videoRef.current.srcObject;
             canvasRef.current.play().catch(console.error);
           } else {
-            console.log("Canvas ref or video srcObject not available", {
-              canvasRef: !!canvasRef.current,
-              videoSrcObject: !!videoRef.current?.srcObject,
-            });
           }
         }, 100);
       },
@@ -188,8 +178,6 @@ export default function RegisterStudentPage() {
     );
   }, [form.photoFiles, capturedBlobs.length]);
 
-  console.log("form.photoFiles", form.photoFiles);
-
   const removeCapturedAt = (idx: number) => {
     setCapturedBlobs((prev) => prev.filter((_, i) => i !== idx));
   };
@@ -222,12 +210,10 @@ export default function RegisterStudentPage() {
           const file = new File([blob], `capture_${idx + 1}.jpg`, {
             type: "image/jpeg",
           });
-          console.log("adding file", file);
           toUpload.push(file);
         });
       } else if (form.photoFiles.length > 0) {
-        console.log("adding form.photoFiles", form.photoFiles);
-        form.photoFiles.forEach((file, idx) => {
+        form.photoFiles.forEach((file) => {
           toUpload.push(file);
         });
       }
@@ -270,6 +256,7 @@ export default function RegisterStudentPage() {
         router.push("/students");
       }, 1500);
     } catch (e) {
+      console.error("Failed to register student:", e);
       setErrorMsg("Registration failed. Please verify inputs.");
     } finally {
       setSubmitting(false);
@@ -277,227 +264,221 @@ export default function RegisterStudentPage() {
   }, [canSubmit, form, capturedBlobs]);
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Student Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  name="studentId"
-                  placeholder="Student ID"
-                  value={form.studentId}
-                  onChange={handleInput}
-                />
-                <Input
-                  name="rollNumber"
-                  placeholder="Roll Number"
-                  value={form.rollNumber}
-                  onChange={handleInput}
-                />
-                <Input
-                  name="firstName"
-                  placeholder="First Name"
-                  value={form.firstName}
-                  onChange={handleInput}
-                />
-                <Input
-                  name="lastName"
-                  placeholder="Last Name"
-                  value={form.lastName}
-                  onChange={handleInput}
-                />
-                <Input
-                  name="email"
-                  placeholder="Email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleInput}
-                />
-                <Input
-                  name="phone"
-                  placeholder="Phone"
-                  value={form.phone}
-                  onChange={handleInput}
-                />
-                <div>
-                  <label className="text-xs text-muted-foreground">Class</label>
-                  <select
-                    className="mt-1 h-9 w-full px-3 border rounded-md bg-background text-sm"
-                    value={form.class}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        class: e.target.value,
-                        division: "",
-                      }))
-                    }
-                  >
-                    <option value="">Select Class</option>
-                    {CLASSES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">
-                    Division
-                  </label>
-                  <select
-                    className="mt-1 h-9 w-full px-3 border rounded-md bg-background text-sm"
-                    value={form.division}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, division: e.target.value }))
-                    }
-                    disabled={!form.class}
-                  >
-                    <option value="">Select Division</option>
-                    {getDivisionsForClass(form.class)?.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {/* face encoding will be generated in backend */}
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Upload Photos (max 3)
-                </p>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handlePhotoFiles}
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={streaming ? "secondary" : "default"}
-                  onClick={streaming ? stopCamera : startCamera}
-                  type="button"
-                >
-                  {streaming
-                    ? "Stop Camera"
-                    : `Start ${CAMERAS[0]?.name || "Camera"}`}
-                </Button>
-                <Button
-                  onClick={captureFrame}
-                  type="button"
-                  disabled={
-                    capturedBlobs.length >= MAX_UPLOAD ||
-                    !streaming ||
-                    (form.photoFiles && form.photoFiles.length > 0)
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Student Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                name="studentId"
+                placeholder="Student ID"
+                value={form.studentId}
+                onChange={handleInput}
+              />
+              <Input
+                name="rollNumber"
+                placeholder="Roll Number"
+                value={form.rollNumber}
+                onChange={handleInput}
+              />
+              <Input
+                name="firstName"
+                placeholder="First Name"
+                value={form.firstName}
+                onChange={handleInput}
+              />
+              <Input
+                name="lastName"
+                placeholder="Last Name"
+                value={form.lastName}
+                onChange={handleInput}
+              />
+              <Input
+                name="email"
+                placeholder="Email"
+                type="email"
+                value={form.email}
+                onChange={handleInput}
+              />
+              <Input
+                name="phone"
+                placeholder="Phone"
+                value={form.phone}
+                onChange={handleInput}
+              />
+              <div>
+                <label className="text-xs text-muted-foreground">Class</label>
+                <select
+                  className="mt-1 h-9 w-full px-3 border rounded-md bg-background text-sm"
+                  value={form.class}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      class: e.target.value,
+                      division: "",
+                    }))
                   }
                 >
-                  Capture
-                </Button>
-                {capturedBlobs.length > 0 && (
-                  <Badge variant="success">
-                    {capturedBlobs.length}/{MAX_UPLOAD} captured
-                  </Badge>
-                )}
-                {capturedBlobs.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setCapturedBlobs([])}
-                  >
-                    Clear Captures
-                  </Button>
-                )}
+                  <option value="">Select Class</option>
+                  {CLASSES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
-                  {/* Stream error display */}
-                  {streamError && (
-                    <div className="absolute top-2 left-2 right-2 z-10">
-                      <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-2">
-                        <p className="text-xs font-medium">Stream Error</p>
-                        <p className="text-xs mt-1">{streamError}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-cover"
-                    muted
-                    playsInline
-                    autoPlay
-                  />
-                </div>
-                <div className="relative w-full aspect-video rounded-md overflow-hidden p-3">
-                  {/* <canvas ref={canvasRef} className="hidden" /> */}
-                  <video
-                    ref={canvasRef}
-                    className="w-full h-full object-cover border rounded-md bg-muted hidden"
-                    muted
-                    playsInline
-                    autoPlay
-                  />
-                  <div className="grid grid-cols-3 gap-3">
-                    {capturedBlobs.map((blob, idx) => (
-                      <div
-                        key={`cap-${idx}`}
-                        className="relative w-full aspect-square bg-background rounded-md overflow-hidden"
-                      >
-                        <img
-                          src={URL.createObjectURL(blob)}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeCapturedAt(idx)}
-                          className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white"
-                          aria-label="Remove capture"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {errorMsg && (
-                <div className="text-sm text-red-500">{errorMsg}</div>
-              )}
-              {successMsg && (
-                <div className="text-sm text-green-500">{successMsg}</div>
-              )}
-
-              <div className="flex justify-end">
-                <Button
-                  onClick={submitForm}
-                  disabled={!canSubmit || submitting}
+              <div>
+                <label className="text-xs text-muted-foreground">
+                  Division
+                </label>
+                <select
+                  className="mt-1 h-9 w-full px-3 border rounded-md bg-background text-sm"
+                  value={form.division}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, division: e.target.value }))
+                  }
+                  disabled={!form.class}
                 >
-                  {submitting ? "Submitting..." : "Register Student"}
-                </Button>
+                  <option value="">Select Division</option>
+                  {getDivisionsForClass(form.class)?.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </CardContent>
-          </Card>
+              {/* face encoding will be generated in backend */}
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Instructions (POC)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm text-muted-foreground">
-              <p>- You can either upload a photo or capture from webcam.</p>
-              <p>- Face encoding will be generated by backend automatically.</p>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Upload Photos (max 3)
+              </p>
+              <Input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoFiles}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant={streaming ? "secondary" : "default"}
+                onClick={streaming ? stopCamera : startCamera}
+                type="button"
+              >
+                {streaming
+                  ? "Stop Camera"
+                  : `Start ${CAMERAS[0]?.name || "Camera"}`}
+              </Button>
+              <Button
+                onClick={captureFrame}
+                type="button"
+                disabled={
+                  capturedBlobs.length >= MAX_UPLOAD ||
+                  !streaming ||
+                  (form.photoFiles && form.photoFiles.length > 0)
+                }
+              >
+                Capture
+              </Button>
+              {capturedBlobs.length > 0 && (
+                <Badge variant="success">
+                  {capturedBlobs.length}/{MAX_UPLOAD} captured
+                </Badge>
+              )}
+              {capturedBlobs.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setCapturedBlobs([])}
+                >
+                  Clear Captures
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
+                {/* Stream error display */}
+                {streamError && (
+                  <div className="absolute top-2 left-2 right-2 z-10">
+                    <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-2">
+                      <p className="text-xs font-medium">Stream Error</p>
+                      <p className="text-xs mt-1">{streamError}</p>
+                    </div>
+                  </div>
+                )}
+
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  autoPlay
+                />
+              </div>
+              <div className="relative w-full aspect-video rounded-md overflow-hidden p-3">
+                {/* <canvas ref={canvasRef} className="hidden" /> */}
+                <video
+                  ref={canvasRef}
+                  className="w-full h-full object-cover border rounded-md bg-muted hidden"
+                  muted
+                  playsInline
+                  autoPlay
+                />
+                <div className="grid grid-cols-3 gap-3">
+                  {capturedBlobs.map((blob, idx) => (
+                    <div
+                      key={`cap-${idx}`}
+                      className="relative w-full aspect-square bg-background rounded-md overflow-hidden"
+                    >
+                      <img
+                        src={URL.createObjectURL(blob)}
+                        alt={`Captured image ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeCapturedAt(idx)}
+                        className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white"
+                        aria-label="Remove capture"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {errorMsg && <div className="text-sm text-red-500">{errorMsg}</div>}
+            {successMsg && (
+              <div className="text-sm text-green-500">{successMsg}</div>
+            )}
+
+            <div className="flex justify-end">
+              <Button onClick={submitForm} disabled={!canSubmit || submitting}>
+                {submitting ? "Submitting..." : "Register Student"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Instructions (POC)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-muted-foreground">
+            <p>- You can either upload a photo or capture from webcam.</p>
+            <p>- Face encoding will be generated by backend automatically.</p>
+          </CardContent>
+        </Card>
       </div>
-    </MainLayout>
+    </div>
   );
 }

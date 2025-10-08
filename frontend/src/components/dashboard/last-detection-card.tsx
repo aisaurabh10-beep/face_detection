@@ -9,8 +9,6 @@ import { getPicUrl } from "@/lib/helper";
 import { useSocket } from "@/lib/socket";
 import { Clock, Camera, User, AlertTriangle } from "lucide-react";
 
-type DetectionKind = "known" | "unknown";
-
 interface KnownDetection {
   kind: "known";
   id: string; // student id

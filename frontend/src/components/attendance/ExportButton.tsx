@@ -52,7 +52,6 @@ type SortOption =
   | "name"
   | "presentPercentage"
   | "absentPercentage";
-type SortOrder = "asc" | "desc";
 
 export function ExportButton({
   filters,
@@ -267,7 +266,7 @@ export function ExportButton({
       const filename = generateFilename(startDate, endDate);
       downloadCSV(csvContent, filename);
     } catch (error) {
-      console.error("Export failed:", error);
+      console.error("Failed to export attendance data:", error);
       onError("Failed to export attendance data");
     } finally {
       setExportLoading(false);
