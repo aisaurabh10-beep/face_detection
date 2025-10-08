@@ -309,10 +309,181 @@ const getDailyClassWise = async (req, res) => {
   }
 };
 
+// Get attendance report with filters and date range
+const getAttendanceReport = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      class: studentClass,
+      division,
+      rollNumber,
+      name,
+      startDate,
+      endDate,
+    } = req.query;
+
+    // Build student filter
+    const studentFilter = { isActive: true };
+    if (studentClass) studentFilter.class = studentClass;
+    if (division) studentFilter.division = division;
+    if (rollNumber) studentFilter.rollNumber = rollNumber;
+    if (name) {
+      studentFilter.$or = [
+        { firstName: { $regex: name, $options: "i" } },
+        { lastName: { $regex: name, $options: "i" } },
+      ];
+    }
+
+    // Get all students matching the filter
+    const students = await Student.find(studentFilter)
+      .select("_id firstName lastName class division rollNumber photos")
+      .lean();
+
+    if (students.length === 0) {
+      return res.json({
+        success: true,
+        data: {
+          reports: [],
+          total: 0,
+          page: parseInt(page),
+          pages: 0,
+        },
+      });
+    }
+
+    const studentIds = students.map((s) => s._id);
+
+    // Build attendance date filter
+    let attendanceDateFilter = {};
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      attendanceDateFilter = {
+        date: { $gte: start, $lte: end },
+      };
+    }
+
+    // Calculate total working days in the date range
+    let totalWorkingDays = 0;
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      // Count working days (Monday to Friday) in the date range
+      let currentDate = new Date(start);
+      while (currentDate <= end) {
+        const dayOfWeek = currentDate.getDay();
+        // Monday = 1, Tuesday = 2, ..., Friday = 5
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          totalWorkingDays++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    } else {
+      // If no date range specified, default to current month
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+      let currentDate = new Date(startOfMonth);
+      while (currentDate <= endOfMonth) {
+        const dayOfWeek = currentDate.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+          totalWorkingDays++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    // Get attendance data for all students in the date range
+    const attendanceData = await Attendance.aggregate([
+      {
+        $match: {
+          studentId: { $in: studentIds },
+          ...attendanceDateFilter,
+        },
+      },
+      {
+        $group: {
+          _id: "$studentId",
+          presentDays: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "present"] }, 1, 0],
+            },
+          },
+          absentDays: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "absent"] }, 1, 0],
+            },
+          },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const attendanceMap = {};
+    attendanceData.forEach((item) => {
+      const presentDays = item.presentDays || 0;
+      const absentDays = totalWorkingDays - presentDays; // Calculate absent days as total working days minus present days
+      const totalDays = totalWorkingDays;
+
+      attendanceMap[item._id.toString()] = {
+        totalDays,
+        presentDays,
+        absentDays,
+        presentPercentage: totalDays > 0 ? (presentDays / totalDays) * 100 : 0,
+        absentPercentage: totalDays > 0 ? (absentDays / totalDays) * 100 : 0,
+      };
+    });
+
+    // Combine student data with attendance data
+    const reports = students.map((student) => {
+      const attendance = attendanceMap[student._id.toString()] || {
+        totalDays: totalWorkingDays,
+        presentDays: 0,
+        absentDays: totalWorkingDays, // If no attendance records, all days are absent
+        presentPercentage: 0,
+        absentPercentage: 100, // If no attendance records, 100% absent
+      };
+
+      return {
+        student,
+        ...attendance,
+      };
+    });
+
+    // Apply pagination
+    const total = reports.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + parseInt(limit);
+    const paginatedReports = reports.slice(startIndex, endIndex);
+
+    res.json({
+      success: true,
+      data: {
+        reports: paginatedReports,
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching attendance report:", error);
+    res.status(500).json({
+      error: true,
+      message: "Error fetching attendance report",
+    });
+  }
+};
+
 module.exports = {
   markAttendance,
   getTodayAttendance,
   getStudentAttendance,
   getAttendanceStats,
   getDailyClassWise,
+  getAttendanceReport,
 };

@@ -175,6 +175,31 @@ class ApiClient {
     );
   }
 
+  async getAttendanceReport(params?: {
+    page?: number;
+    limit?: number;
+    class?: string;
+    division?: string;
+    rollNumber?: string;
+    name?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.class) searchParams.append("class", params.class);
+    if (params?.division) searchParams.append("division", params.division);
+    if (params?.rollNumber)
+      searchParams.append("rollNumber", params.rollNumber);
+    if (params?.name) searchParams.append("name", params.name);
+    if (params?.startDate) searchParams.append("startDate", params.startDate);
+    if (params?.endDate) searchParams.append("endDate", params.endDate);
+
+    const query = searchParams.toString();
+    return this.axios.get(`/attendance/report${query ? `?${query}` : ""}`);
+  }
+
   // Unknown Faces API
   async logUnknownFace(unknownFaceData: FormData) {
     return this.axios.post("/unknown-faces/log", unknownFaceData, {
