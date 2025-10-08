@@ -71,12 +71,6 @@ export const navigation = [
     icon: Calendar,
     description: "View attendance records",
   },
-  {
-    name: "Reports",
-    href: "/reports",
-    icon: BarChart3,
-    description: "Analytics and insights",
-  },
 ];
 
 export const defaultQuickStats: QuickStatItem[] = [
@@ -117,6 +111,10 @@ export const getPageName = (pathname: string): string => {
 
   if (pathMap[pathname]) {
     return pathMap[pathname];
+  }
+
+  if (pathname.startsWith("/attendance/student/")) {
+    return "Student Attendance Details";
   }
 
   if (pathname.startsWith("/students/") && pathname !== "/students/register") {

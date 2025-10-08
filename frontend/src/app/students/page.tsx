@@ -100,8 +100,8 @@ export default function StudentsPage() {
             <CardTitle>Student Management</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name"
@@ -112,7 +112,7 @@ export default function StudentsPage() {
                   }
                 />
               </div>
-              <div>
+              <div className="w-40">
                 <select
                   className="h-9 w-full px-3 border rounded-md bg-background text-sm"
                   value={filters.class}
@@ -131,7 +131,7 @@ export default function StudentsPage() {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="w-32">
                 <select
                   className="h-9 w-full px-3 border rounded-md bg-background text-sm"
                   value={filters.division}
@@ -147,20 +147,24 @@ export default function StudentsPage() {
                   ))}
                 </select>
               </div>
-              <Input
-                placeholder="Roll Number"
-                value={filters.rollNumber}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, rollNumber: e.target.value }))
-                }
-              />
-              <Input
-                placeholder="Email"
-                value={filters.email}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, email: e.target.value }))
-                }
-              />
+              <div className="w-32">
+                <Input
+                  placeholder="Roll Number"
+                  value={filters.rollNumber}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, rollNumber: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="w-48">
+                <Input
+                  placeholder="Email"
+                  value={filters.email}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, email: e.target.value }))
+                  }
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
