@@ -60,6 +60,7 @@ export function useNotifications() {
         dispatch(setNotifications(listRes.data.data.notifications));
         dispatch(setUnreadCount(countRes.data.data.unreadCount));
       } catch (e: any) {
+        console.error("Failed to load notifications:", e);
         dispatch(setError("Failed to load notifications"));
       } finally {
         dispatch(setLoading(false));
@@ -73,6 +74,7 @@ export function useNotifications() {
       await api.markNotificationsAsRead(ids);
       dispatch(markAsReadLocal(ids));
     } catch (e) {
+      console.error("Failed to mark notifications as read:", e);
       // swallow for POC
     }
   };
@@ -82,6 +84,7 @@ export function useNotifications() {
       await api.markAllNotificationsAsRead();
       dispatch(markAllAsReadLocal());
     } catch (e) {
+      console.error("Failed to mark all notifications as read:", e);
       // swallow for POC
     }
   };

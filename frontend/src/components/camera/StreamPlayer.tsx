@@ -13,7 +13,6 @@ import {
   CameraOff,
   Play,
   Square,
-  Settings,
   Expand,
   Minimize2,
 } from "lucide-react";

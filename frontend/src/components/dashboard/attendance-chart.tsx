@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Calendar, UserCheck, UserX, Maximize2, Minimize2 } from "lucide-react";
+import { Calendar, Maximize2, Minimize2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { DailyClassWiseResponse } from "@/lib/types";
 import { CLASSES } from "@/lib/helper";
@@ -38,6 +38,7 @@ export function AttendanceChart() {
           loading: false,
         }));
       } catch (e) {
+        console.error("Failed to load attendance chart data:", e);
         if (mounted) setState((s) => ({ ...s, loading: false }));
       }
     };

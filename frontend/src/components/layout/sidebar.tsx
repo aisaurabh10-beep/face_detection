@@ -61,6 +61,7 @@ export function Sidebar({ className }: SidebarProps) {
           })
         );
       } catch (e) {
+        console.error("Failed to load attendance stats:", e);
         if (!axios.isCancel(e)) {
           // leave defaults on error
         }
@@ -89,8 +90,10 @@ export function Sidebar({ className }: SidebarProps) {
               <Activity className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Bishop's School</h1>
-              <p className="text-xs text-muted-foreground">AI Attendance System</p>
+              <h1 className="text-lg font-semibold">Bishop&apos;s School</h1>
+              <p className="text-xs text-muted-foreground">
+                AI Attendance System
+              </p>
             </div>
           </div>
         )}

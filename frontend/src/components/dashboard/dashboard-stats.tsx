@@ -4,20 +4,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
-import { defaultDashboardStats, CLASSES, DIVISIONS } from "@/lib/helper";
-import { Button } from "../ui/button";
-import { RefreshCw } from "lucide-react";
-
-interface StatItemConfig {
-  title: string;
-  value: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-}
+import { defaultDashboardStats } from "@/lib/helper";
 
 export function DashboardStats() {
-  const [refreshToken, setRefreshToken] = useState(0);
+  const [refreshToken] = useState(0);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -45,6 +35,7 @@ export function DashboardStats() {
           lateArrivals: s.lateArrivals || 0,
         });
       } catch (e) {
+        console.error("Failed to load dashboard stats:", e);
         // ignore for POC
       } finally {
         if (mounted) setLoading(false);
@@ -57,12 +48,6 @@ export function DashboardStats() {
       controller.abort();
     };
   }, [refreshToken]);
-
-  const totalClasses = CLASSES.length;
-  const totalDivisions = Object.values(DIVISIONS).reduce(
-    (sum, divisions) => sum + divisions.length,
-    0
-  );
 
   const items = loading
     ? defaultDashboardStats
