@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import { defaultDashboardStats } from "@/lib/helper";
+import { useSocket } from "@/lib/socket";
 
 export function DashboardStats() {
-  const [refreshToken] = useState(0);
+  const { on, off } = useSocket();
+  const [refreshToken, setRefreshToken] = useState(0);
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -48,6 +50,20 @@ export function DashboardStats() {
       controller.abort();
     };
   }, [refreshToken]);
+
+  // Listen for attendance events to refresh stats
+  useEffect(() => {
+    const handleAttendanceMarked = () => {
+      console.log("Attendance marked, refreshing dashboard stats");
+      setRefreshToken((prev) => prev + 1);
+    };
+
+    on("attendance_marked", handleAttendanceMarked as any);
+
+    return () => {
+      off("attendance_marked", handleAttendanceMarked as any);
+    };
+  }, [on, off]);
 
   const items = loading
     ? defaultDashboardStats

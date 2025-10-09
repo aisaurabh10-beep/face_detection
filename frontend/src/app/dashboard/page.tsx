@@ -21,7 +21,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <LastDetectionCard />
+          <LastDetectionCard showOverlay={true}/>
         </div>
       </div>
 
