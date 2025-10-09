@@ -123,7 +123,7 @@ FRONTEND_URL=http://localhost:3000
 - `email`, `phone`: Contact information
 - `class`, `rollNumber`: Academic information
 - `photo`: Profile photo path
-- `faceEncoding`: Face recognition data
+- `embedding`: Face recognition data
 - `isActive`: Account status
 - `lastSeen`: Last activity timestamp
 

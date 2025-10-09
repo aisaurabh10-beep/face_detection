@@ -27,7 +27,8 @@ const AttendanceSchema = new mongoose.Schema(
     },
     cameraId: {
       type: String,
-      required: true
+      // required: true
+      default: "camera1"
     },
     confidence: {
       type: Number,
@@ -35,9 +36,9 @@ const AttendanceSchema = new mongoose.Schema(
       max: 1,
       default: 0
     },
-    faceImageUrl: {
-      type: String,
-      default: ""
+    deepface_distance: {
+      type: Number
+      
     },
     location: {
       type: String,

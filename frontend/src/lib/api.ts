@@ -12,7 +12,7 @@ export interface Student {
   rollNumber: string;
   photos?: string[];
   photoDir?: string;
-  faceEncoding?: number[];
+  // embedding?: number[];
   isActive: boolean;
   lastSeen?: string;
   createdAt: string;
