@@ -16,7 +16,9 @@ def load_embeddings_from_mongodb(collection):
     try:
         for doc in collection.find({}):
             embeddings_db.append(doc["embedding"])
-            names.append(doc["name"])
+            names.append(doc["studentId"])
+            # names.append(doc["_id"])
+
         logging.info(f"Loaded {len(embeddings_db)} embeddings for {len(set(names))} unique individuals from MongoDB.")
     except pymongo.errors.PyMongoError as e:
         logging.error(f"Error loading data from MongoDB: {e}")
