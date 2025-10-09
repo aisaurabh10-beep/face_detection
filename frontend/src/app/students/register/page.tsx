@@ -24,11 +24,11 @@ export default function RegisterStudentPage() {
   const streamInitializedRef = useRef(false);
 
   const [form, setForm] = useState({
-    studentId: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+    studentId: "123",
+    firstName: "vvv",
+    lastName: "effd",
+    email: "f@gmail.com",
+    phone: "9561157845",
     class: "",
     division: "",
     rollNumber: "",
@@ -91,7 +91,7 @@ export default function RegisterStudentPage() {
     if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
       return;
 
-    const firstCamera = CAMERAS[0];
+    const firstCamera = CAMERAS[1];
     if (!firstCamera) {
       setStreamError("No cameras available");
       return;

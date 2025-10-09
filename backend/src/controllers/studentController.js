@@ -1,5 +1,6 @@
 const Student = require("../models/Student");
 const { studentUpload } = require("../middleware/upload");
+const axios = require("axios");
 
 // Get all students
 const getAllStudents = async (req, res) => {
@@ -141,18 +142,46 @@ const registerStudent = async (req, res) => {
       const student = new Student(studentData);
       await student.save();
 
-      // Emit real-time update
-      req.io.emit("student_registered", {
-        student: student,
-        message: "New student registered",
-      });
 
-      res.status(201).json({
-        success: true,
-        message: "Student registered successfully",
-        data: student,
-      });
-    });
+
+      // call api here 
+
+      try {
+        const total = await Student.countDocuments();
+
+        console.log("total ", total)
+
+        const response = await axios.post("http://127.0.0.1:8000/sync-embeddings");
+        console.log(" response.data", response.data)
+
+        if (response.data && response.data.success === "True") {
+          // ✅ Proceed only if response success = True
+          req.io.emit("student_registered", {
+            student: student,
+            message: "New student registered",
+          });
+
+          return res.status(201).json({
+            success: true,
+            message: "Student registered and embeddings synced successfully",
+            data: student,
+          });
+        } else {
+          // ❌ Sync failed
+          console.error("Embedding sync failed:", response.data);
+          return res.status(500).json({
+            error: true,
+            message: "Student saved but embedding sync failed",
+          });
+        }
+      } catch (syncError) {
+        console.error("Error calling sync API:", syncError.message);
+        return res.status(500).json({
+          error: true,
+          message: "Student saved but failed to call sync API",
+        });
+      }
+    })
   } catch (error) {
     console.error("Error registering student:", error);
     res.status(500).json({
@@ -246,16 +275,14 @@ const toggleStudentStatus = async (req, res) => {
     // Emit real-time update
     req.io.emit("student_updated", {
       student: student,
-      message: `Student ${
-        newStatus ? "activated" : "deactivated"
-      } successfully`,
+      message: `Student ${newStatus ? "activated" : "deactivated"
+        } successfully`,
     });
 
     res.json({
       success: true,
-      message: `Student ${
-        newStatus ? "activated" : "deactivated"
-      } successfully`,
+      message: `Student ${newStatus ? "activated" : "deactivated"
+        } successfully`,
       data: student,
     });
   } catch (error) {

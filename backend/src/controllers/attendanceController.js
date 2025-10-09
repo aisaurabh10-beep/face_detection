@@ -8,6 +8,7 @@ const markAttendance = async (req, res) => {
     const { studentId, cameraId, confidence, faceImageUrl, location } =
       req.body;
 
+
     // Find the student
     const student = await Student.findById(studentId);
     if (!student) {
@@ -56,14 +57,14 @@ const markAttendance = async (req, res) => {
       await attendance.save();
     }
 
-    // Update student's last seen
-    await Student.findByIdAndUpdate(studentId, { lastSeen: now });
-
     // Populate student data for response
     await attendance.populate(
       "studentId",
       "firstName lastName studentId class rollNumber photo"
     );
+
+
+
 
     // Emit real-time update
     req.io.emit("attendance_marked", {

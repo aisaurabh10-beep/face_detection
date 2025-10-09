@@ -57,10 +57,9 @@ const StudentSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-    faceEncoding: {
-      type: [Number],
-      default: [],
-    },
+    // embedding: {
+    //   type: [Number],
+    // },
     isActive: {
       type: Boolean,
       default: true,
