@@ -34,7 +34,7 @@ interface UnknownDetection {
 
 type LastDetection = KnownDetection | UnknownDetection | null;
 
-export function LastDetectionCard() {
+export function LastDetectionCard({ showOverlay }: { showOverlay: boolean }) {
   const { on, off } = useSocket();
   const [lastDetection, setLastDetection] = useState<LastDetection>(null);
   const [visible, setVisible] = useState(false);
@@ -49,6 +49,7 @@ export function LastDetectionCard() {
 
   useEffect(() => {
     const handleAttendance = (data: any) => {
+      console.log("handle socket attendance", data);
       // { attendance, student, message }
       const now = new Date().toISOString();
       const det: KnownDetection = {
@@ -104,104 +105,139 @@ export function LastDetectionCard() {
     return lastDetection.kind === "known" ? "Last Entry" : "Unknown Face";
   }, [lastDetection]);
 
-  return (
-    <Card className="relative overflow-hidden">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {headerTitle}
-        </CardTitle>
-        {lastDetection?.kind === "known" ? (
-          <Badge variant="success" className="text-xs">
-            Present
-          </Badge>
-        ) : lastDetection?.kind === "unknown" ? (
-          <Badge variant="destructive" className="text-xs">
-            Unknown
-          </Badge>
-        ) : null}
+  return showOverlay ? (
+    <Card className="mt-5 relative overflow-hidden bg-black/90 backdrop-blur-sm border border-gray-700 shadow-2xl max-w-sm mx-auto">
+      <CardHeader className="text-center pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-bold text-white">
+            {headerTitle}
+          </CardTitle>
+          {lastDetection?.kind === "known" ? (
+            <Badge className="bg-green-600 text-white border-green-500 px-3 py-1">
+              Present
+            </Badge>
+          ) : lastDetection?.kind === "unknown" ? (
+            <Badge className="bg-red-600 text-white border-red-500 px-3 py-1">
+              Unknown
+            </Badge>
+          ) : null}
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {!lastDetection ? (
-          <div className="text-sm text-muted-foreground">
-            Waiting for detections…
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+              <User className="h-8 w-8 text-gray-400" />
+            </div>
+            <p className="text-sm text-gray-400">Waiting for detections…</p>
           </div>
         ) : (
           <div
-            className={`transition-opacity duration-500 ${
-              visible ? "opacity-100" : "opacity-0"
+            className={`transition-all duration-500 ${
+              visible ? "opacity-100 scale-100" : "opacity-0 scale-95"
             }`}
           >
-            <div className="flex items-start gap-3">
-              <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+            {/* Large Image at Top */}
+            <div className="text-center mb-6">
+              <div className="relative w-32 h-32 mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shadow-lg border border-gray-700">
                 {lastDetection.photo || (lastDetection as any).photos?.[0] ? (
                   <Image
                     src={getPicUrl(
                       lastDetection.photo || (lastDetection as any).photos?.[0]
                     )}
                     alt="Face"
-                    width={64}
-                    height={64}
-                    className="object-cover w-16 h-16"
+                    width={128}
+                    height={128}
+                    className="object-cover w-full h-full"
                     unoptimized
                   />
                 ) : (
-                  <User className="h-6 w-6 text-muted-foreground" />
+                  <User className="h-12 w-12 text-gray-400" />
+                )}
+                {/* Confidence indicator */}
+                {typeof lastDetection.confidence === "number" && (
+                  <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium border border-blue-500">
+                    {Math.round(lastDetection.confidence * 100)}%
+                  </div>
                 )}
               </div>
+            </div>
 
-              <div className="flex-1 min-w-0">
-                {lastDetection.kind === "known" ? (
-                  <div className="space-y-1">
-                    <div className="text-base font-semibold truncate">
-                      {lastDetection.name}
-                    </div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {lastDetection.className
-                        ? `Class ${lastDetection.className}`
-                        : ""}
-                      {lastDetection.rollNumber
-                        ? ` • Roll ${lastDetection.rollNumber}`
-                        : ""}
-                    </div>
+            {/* Details Below Image */}
+            <div className="space-y-4">
+              {lastDetection.kind === "known" ? (
+                <div className="text-center space-y-2">
+                  <h3 className="text-xl font-bold text-white">
+                    {lastDetection.name}
+                  </h3>
+                  <div className="flex flex-wrap justify-center gap-2 text-sm">
+                    {lastDetection.className && (
+                      <span className="bg-blue-900 text-blue-300 px-3 py-1 rounded-full border border-blue-700">
+                        Class {lastDetection.className}
+                      </span>
+                    )}
+                    {lastDetection.rollNumber && (
+                      <span className="bg-purple-900 text-purple-300 px-3 py-1 rounded-full border border-purple-700">
+                        Roll {lastDetection.rollNumber}
+                      </span>
+                    )}
+                    {lastDetection.division && (
+                      <span className="bg-green-900 text-green-300 px-3 py-1 rounded-full border border-green-700">
+                        {lastDetection.division}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="flex items-center text-sm font-medium">
-                    <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2" />{" "}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="flex items-center justify-center text-lg font-semibold text-red-400 mb-2">
+                    <AlertTriangle className="h-5 w-5 mr-2" />
                     Unknown Face Detected
                   </div>
-                )}
+                  <p className="text-sm text-gray-400">
+                    Face not recognized in the system
+                  </p>
+                </div>
+              )}
 
-                <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
-                  {lastDetection.cameraId && (
-                    <span className="flex items-center gap-1">
-                      <Camera className="h-3 w-3" /> {lastDetection.cameraId}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />{" "}
+              {/* Metadata */}
+              <div className="bg-gray-900 rounded-lg p-4 space-y-2 border border-gray-700">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-gray-400">
+                    <Clock className="h-4 w-4" />
+                    Time
+                  </span>
+                  <span className="font-medium text-white">
                     {new Date(lastDetection.time).toLocaleTimeString()}
                   </span>
-                  {typeof lastDetection.confidence === "number" && (
-                    <span>
-                      {Math.round(lastDetection.confidence * 100)}% conf
-                    </span>
-                  )}
                 </div>
-
-                {lastDetection.kind === "known" ? (
-                  <div className="mt-3">
-                    <Link href={`/students`}>
-                      <span className="inline-flex items-center text-xs px-3 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 cursor-pointer">
-                        Open student
-                      </span>
-                    </Link>
+                {lastDetection.cameraId && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-gray-400">
+                      <Camera className="h-4 w-4" />
+                      Camera
+                    </span>
+                    <span className="font-medium text-white">
+                      {lastDetection.cameraId}
+                    </span>
                   </div>
-                ) : null}
+                )}
               </div>
+
+              {/* Action Button */}
+              {lastDetection.kind === "known" && (
+                <div className="text-center">
+                  <Link href={`/students`}>
+                    <span className="inline-flex items-center px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer shadow-md border border-blue-500">
+                      View Student Details
+                    </span>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
       </CardContent>
     </Card>
-  );
+  ) : null;
 }

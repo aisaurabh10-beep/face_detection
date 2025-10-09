@@ -5,9 +5,7 @@ const UnknownFace = require("../models/UnknownFace");
 // Mark attendance
 const markAttendance = async (req, res) => {
   try {
-    const { studentId, cameraId, confidence, faceImageUrl, location } =
-      req.body;
-
+    const { studentId, cameraId, confidence } = req.body;
 
     // Find the student
     const student = await Student.findById(studentId);
@@ -49,8 +47,6 @@ const markAttendance = async (req, res) => {
         entryTime: now,
         cameraId,
         confidence,
-        faceImageUrl: faceImageUrl || "",
-        location: location || "",
         status: "present",
       });
 
@@ -62,9 +58,6 @@ const markAttendance = async (req, res) => {
       "studentId",
       "firstName lastName studentId class rollNumber photo"
     );
-
-
-
 
     // Emit real-time update
     req.io.emit("attendance_marked", {

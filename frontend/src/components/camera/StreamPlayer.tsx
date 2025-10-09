@@ -20,6 +20,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { STORAGE_CAMERA_KEY, STORAGE_KEY } from "@/lib/constants";
 import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
+import { api } from "@/lib/api";
 
 type StreamSource = "device" | "actual";
 
@@ -49,6 +50,8 @@ export function StreamPlayer({
   const [showOverlay, setShowOverlay] = useState(false);
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
+  const [testLoading, setTestLoading] = useState(false);
+  const [testMessage, setTestMessage] = useState<string>("");
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isExpanded =
@@ -71,24 +74,60 @@ export function StreamPlayer({
     return cameras.find((c) => c.id === selectedCameraId) || cameras[0] || null;
   }, [cameras, selectedCameraId]);
 
+  // useEffect(() => {
+  //   const show = () => {
+  //     console.log("show overlay");
+  //     setShowOverlay(true);
+  //     // if (videoRef.current && !videoRef.current.paused) {
+  //     //   try {
+  //     //     videoRef.current.pause();
+  //     //   } catch {}
+  //     // }
+  //     // if (stopOverlayTimer.current) {
+  //     //   window.clearTimeout(stopOverlayTimer.current);
+  //     // }
+
+  //     stopOverlayTimer.current = window.setTimeout(() => {
+  //       console.log("hide overlay");
+  //       setShowOverlay(false);
+  //       // if (videoRef.current && isStreaming) {
+  //       //   try {
+  //       //     videoRef.current.play();
+  //       //   } catch {}
+  //       // }
+  //     }, 2000);
+  //   };
+
+  //   const handleAttendance = () => show();
+  //   const handleUnknown = () => show();
+
+  //   on("attendance_marked", handleAttendance as any);
+  //   on("unknown_face_detected", handleUnknown as any);
+
+  //   return () => {
+  //     off("attendance_marked", handleAttendance as any);
+  //     off("unknown_face_detected", handleUnknown as any);
+  //     if (stopOverlayTimer.current) {
+  //       window.clearTimeout(stopOverlayTimer.current);
+  //       stopOverlayTimer.current = null;
+  //     }
+  //   };
+  // }, [on, off]);
+
   useEffect(() => {
     const show = () => {
+      console.log("show overlay");
       setShowOverlay(true);
-      // if (videoRef.current && !videoRef.current.paused) {
-      //   try {
-      //     videoRef.current.pause();
-      //   } catch {}
-      // }
-      if (stopOverlayTimer.current)
-        window.clearTimeout(stopOverlayTimer.current);
+
+      if (stopOverlayTimer.current) {
+        clearTimeout(stopOverlayTimer.current);
+      }
+
       stopOverlayTimer.current = window.setTimeout(() => {
+        console.log("hide overlay");
         setShowOverlay(false);
-        // if (videoRef.current && isStreaming) {
-        //   try {
-        //     videoRef.current.play();
-        //   } catch {}
-        // }
-      }, 2000);
+        stopOverlayTimer.current = null;
+      }, 5000);
     };
 
     const handleAttendance = () => show();
@@ -100,10 +139,12 @@ export function StreamPlayer({
     return () => {
       off("attendance_marked", handleAttendance as any);
       off("unknown_face_detected", handleUnknown as any);
-      if (stopOverlayTimer.current)
-        window.clearTimeout(stopOverlayTimer.current);
+      if (stopOverlayTimer.current) {
+        clearTimeout(stopOverlayTimer.current);
+        stopOverlayTimer.current = null;
+      }
     };
-  }, [on, off, isStreaming]);
+  }, []); // no deps
 
   const start = useCallback(async () => {
     setIsStreaming(true);
@@ -149,6 +190,36 @@ export function StreamPlayer({
       } catch {}
     }
   }, [source, selectedCameraId, cameras]);
+
+  const handleTestAttendance = useCallback(async () => {
+    setTestLoading(true);
+    setTestMessage("");
+
+    try {
+      // Test data for attendance marking
+      const testData = {
+        studentId: "68e57a3282accb11ff5d1a25", // Example ObjectId - you may need to replace with actual student ID
+        cameraId: "camera1",
+        confidence: 0.95,
+      };
+
+      const response = await api.markAttendance(testData);
+
+      setTestMessage(`✅ Success: ${response.data.message}`);
+      console.log("Test attendance marked:", response.data);
+    } catch (error: any) {
+      const errorMsg =
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to mark test attendance";
+      setTestMessage(`❌ Error: ${errorMsg}`);
+      console.error("Test attendance error:", error);
+    } finally {
+      setTestLoading(false);
+      // Clear message after 5 seconds
+      setTimeout(() => setTestMessage(""), 5000);
+    }
+  }, [selectedCameraId]);
 
   const stop = useCallback(() => {
     setIsStreaming(false);
@@ -257,6 +328,14 @@ export function StreamPlayer({
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTestAttendance}
+            disabled={testLoading}
+          >
+            {testLoading ? "Testing..." : "Test"}
+          </Button>
           {pathname === "/stream" ? (
             isExpanded ? (
               <Link href="/stream">
@@ -292,6 +371,24 @@ export function StreamPlayer({
             </div>
           )}
 
+          {/* Test message display */}
+          {testMessage && (
+            <div className="absolute top-3 right-3 z-10">
+              <div
+                className={`rounded-md p-3 max-w-sm ${
+                  testMessage.includes("✅")
+                    ? "bg-green-100 border border-green-300 text-green-500"
+                    : "bg-red-100 border border-red-300 text-red-500"
+                }`}
+              >
+                <p className="text-sm font-medium">
+                  {testMessage.includes("✅") ? "Test Success" : "Test Error"}
+                </p>
+                <p className="text-xs mt-1">{testMessage}</p>
+              </div>
+            </div>
+          )}
+
           {/* Video stream for both device and actual cameras */}
           {source === "device" || source === "actual" ? (
             <video
@@ -309,13 +406,7 @@ export function StreamPlayer({
               </div>
             </div>
           )}
-
-          {/* Overlay LastDetectionCard */}
-          {showOverlay && (
-            <div className="absolute top-3 left-3 right-3">
-              <LastDetectionCard />
-            </div>
-          )}
+          <LastDetectionCard showOverlay={showOverlay} />
         </div>
         <div className="p-4 bg-muted/50 border-t">
           <div className="flex items-center justify-between">
