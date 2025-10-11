@@ -5,10 +5,13 @@ const UnknownFace = require("../models/UnknownFace");
 // Mark attendance
 const markAttendance = async (req, res) => {
   try {
-    const { studentId, cameraId, confidence } = req.body;
+    const { studentId, cameraId, confidence, deepface_distance } = req.body;
+    console.log("-----", req.body, studentId, cameraId, confidence, deepface_distance)
 
     // Find the student
-    const student = await Student.findById(studentId);
+    console.log("studentId", studentId)
+    const student = await Student.findOne({ studentId });
+    console.log("student", student)
     if (!student) {
       return res.status(404).json({
         error: true,
@@ -23,35 +26,47 @@ const markAttendance = async (req, res) => {
 
     // Check if attendance already exists for today
     let attendance = await Attendance.findOne({
-      studentId,
+      studentId: student._id,
       date: { $gte: startOfDay, $lte: endOfDay },
     });
 
     const now = new Date();
 
-    if (attendance) {
-      // Update existing attendance
-      if (!attendance.exitTime) {
-        attendance.exitTime = now;
-        attendance.status = "present";
-      }
-      attendance.confidence = confidence;
-      if (faceImageUrl) attendance.faceImageUrl = faceImageUrl;
+    // if (attendance) {
+    //   // Update existing attendance
+    //   if (!attendance.exitTime) {
+    //     attendance.exitTime = now;
+    //     attendance.status = "present";
+    //   }
+    //   attendance.confidence = confidence;
 
-      await attendance.save();
-    } else {
-      // Create new attendance record
-      attendance = new Attendance({
-        studentId,
-        date: now,
-        entryTime: now,
-        cameraId,
-        confidence,
-        status: "present",
-      });
+    //   await attendance.save();
+    // } else {
+    //   // Create new attendance record
+    //   attendance = new Attendance({
+    //     studentId : student._id,
+    //     date: now,
+    //     entryTime: now,
+    //     cameraId,
+    //     confidence,
+    //     status: "present",
+    //     deepface_distance:deepface_distance || "0"
+    //   });
 
-      await attendance.save();
-    }
+    //   await attendance.save();
+    // }
+
+    attendance = new Attendance({
+      studentId: student._id,
+      date: now,
+      entryTime: now,
+      cameraId,
+      confidence,
+      status: "present",
+      deepface_distance: deepface_distance || "0"
+    });
+
+    await attendance.save();
 
     // Populate student data for response
     await attendance.populate(
@@ -273,9 +288,9 @@ const getDailyClassWise = async (req, res) => {
 
     const avgPresentPercentage = classes.length
       ? classes.reduce(
-          (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
-          0
-        ) / classes.length
+        (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
+        0
+      ) / classes.length
       : 0;
 
     const summary = {
