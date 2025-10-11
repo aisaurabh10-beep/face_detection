@@ -18,8 +18,8 @@ def post_attendance(student_id: str, yolo_conf: float, deepface_dist: float, con
     timeout = config.getint('API', 'request_timeout')
     
     payload = {
-        "student_id": student_id,
-        "yolo_confidence": float(f"{yolo_conf:.2f}"),
+        "studentId": student_id,
+        "confidence": float(f"{yolo_conf:.2f}"),
         "deepface_distance": float(f"{deepface_dist:.2f}")
     }
     

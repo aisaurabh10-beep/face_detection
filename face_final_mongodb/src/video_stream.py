@@ -7,6 +7,8 @@ class VideoStream:
     """Handles threaded video capture to prevent I/O blocking."""
     def __init__(self, src):
         self.stream = cv2.VideoCapture(src, cv2.CAP_FFMPEG)
+        # self.stream = cv2.VideoCapture(src)
+
         self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 2)
         if not self.stream.isOpened():
             logging.error(f"Could not open video stream at {src}")

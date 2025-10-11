@@ -286,9 +286,12 @@ async def sync_embeddings():
     # Process the results into success and error lists
     success_details = [res[1] for res in results if res[0] == "success"]
     error_details = [res[1] for res in results if res[0] == "error"]
+
+    msg = ['True' for res in results if res[0] == "success"]
     
     response_content = {
         "message": "Embedding synchronization process completed.",
+        "success" : msg[0],
         "processed_count": len(results),
         "success_count": len(success_details),
         "error_count": len(error_details),
