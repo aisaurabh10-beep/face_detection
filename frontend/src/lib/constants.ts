@@ -1,4 +1,4 @@
-export const MAX_UPLOAD = 3;
+export const MAX_UPLOAD = 6;
 export const STORAGE_KEY = "stream_source_selection";
 export const STORAGE_CAMERA_KEY = "stream_selected_camera_id";
 export const CAMERAS = [

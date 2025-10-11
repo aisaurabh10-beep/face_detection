@@ -112,8 +112,7 @@ class ApiClient {
     studentId: string;
     cameraId: string;
     confidence?: number;
-    faceImageUrl?: string;
-    location?: string;
+
   }) {
     return this.axios.post("/attendance/mark", attendanceData);
   }

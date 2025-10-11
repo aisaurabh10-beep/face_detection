@@ -10,7 +10,7 @@ const {
 } = require("../controllers/attendanceController");
 const { validateAttendance } = require("../middleware/validation");
 
-router.post("/mark", validateAttendance, markAttendance);
+router.post("/mark", markAttendance);
 router.get("/today", getTodayAttendance);
 router.get("/student/:studentId", getStudentAttendance);
 router.get("/stats", getAttendanceStats);

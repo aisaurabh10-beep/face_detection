@@ -38,7 +38,6 @@ const AttendanceSchema = new mongoose.Schema(
     },
     deepface_distance: {
       type: Number
-      
     },
     location: {
       type: String,
@@ -55,15 +54,6 @@ const AttendanceSchema = new mongoose.Schema(
 AttendanceSchema.index({ studentId: 1, date: 1 });
 AttendanceSchema.index({ date: 1 });
 AttendanceSchema.index({ cameraId: 1 });
-AttendanceSchema.index({ status: 1 });
-
-// Virtual for duration (if both entry and exit times exist)
-AttendanceSchema.virtual("duration").get(function() {
-  if (this.entryTime && this.exitTime) {
-    return this.exitTime - this.entryTime;
-  }
-  return null;
-});
 
 // Ensure virtual fields are serialized
 AttendanceSchema.set("toJSON", { virtuals: true });

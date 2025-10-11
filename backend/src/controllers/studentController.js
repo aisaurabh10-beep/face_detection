@@ -84,7 +84,7 @@ const getStudentById = async (req, res) => {
 const registerStudent = async (req, res) => {
   try {
     // Accept up to MAX_UPLOAD photos field named 'photos' (multer parses before validation)
-    studentUpload.array("photos", 3)(req, res, async (err) => {
+    studentUpload.array("photos", 6)(req, res, async (err) => {
       if (err) {
         return res.status(400).json({
           error: true,
