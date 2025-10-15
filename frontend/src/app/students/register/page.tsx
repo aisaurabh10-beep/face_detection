@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { CLASSES, getDivisionsForClass } from "@/lib/helper";
 import { MAX_UPLOAD, CAMERAS } from "@/lib/constants";
 import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
+import { AxiosError } from "axios";
 
 export default function RegisterStudentPage() {
   const router = useRouter();
@@ -18,17 +19,17 @@ export default function RegisterStudentPage() {
   const [streaming, setStreaming] = useState(false);
   const [capturedBlobs, setCapturedBlobs] = useState<Blob[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [errorMsg, setErrorMsg] = useState<string>("rdtfjghm5jrymhg");
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
 
   const [form, setForm] = useState({
-    studentId: "123",
-    firstName: "vvv",
-    lastName: "effd",
-    email: "f@gmail.com",
-    phone: "9561157845",
+    studentId: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
     class: "",
     division: "",
     rollNumber: "",
@@ -87,6 +88,7 @@ export default function RegisterStudentPage() {
   // }, []);
 
   // Actual camera functions
+  
   const startCamera = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
       return;
@@ -255,9 +257,8 @@ export default function RegisterStudentPage() {
       setTimeout(() => {
         router.push("/students");
       }, 1500);
-    } catch (e) {
-      console.error("Failed to register student:", e);
-      setErrorMsg("Registration failed. Please verify inputs.");
+    } catch (error) {
+      setErrorMsg(JSON.parse(error?.message).message);
     } finally {
       setSubmitting(false);
     }
@@ -270,6 +271,15 @@ export default function RegisterStudentPage() {
           <CardHeader>
             <CardTitle>Student Details</CardTitle>
           </CardHeader>
+          {streamError && (
+            <div className=" top-2 left-2 right-2 z-10 border mx-6 mb-4">
+              <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-2">
+                <p className="text-xs font-medium">Stream Error</p>
+                <p className="text-xs mt-1">{streamError}</p>
+              </div>
+            </div>
+          )}
+
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
@@ -405,14 +415,6 @@ export default function RegisterStudentPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
                 {/* Stream error display */}
-                {streamError && (
-                  <div className="absolute top-2 left-2 right-2 z-10">
-                    <div className="bg-red-100 border border-red-300 text-red-500 rounded-md p-2">
-                      <p className="text-xs font-medium">Stream Error</p>
-                      <p className="text-xs mt-1">{streamError}</p>
-                    </div>
-                  </div>
-                )}
 
                 <video
                   ref={videoRef}
@@ -456,7 +458,12 @@ export default function RegisterStudentPage() {
               </div>
             </div>
 
-            {errorMsg && <div className="text-sm text-red-500">{errorMsg}</div>}
+            {errorMsg && (
+              <div className=" top-2 left-2 right-2 z-10 border mb-4 g-red-100 border border-red-300 text-red-500 rounded-md p-2">
+                {errorMsg}
+              </div>
+            )}
+
             {successMsg && (
               <div className="text-sm text-green-500">{successMsg}</div>
             )}

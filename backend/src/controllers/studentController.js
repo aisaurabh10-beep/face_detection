@@ -83,7 +83,6 @@ const getStudentById = async (req, res) => {
 // Register new student
 const registerStudent = async (req, res) => {
   try {
-    // Accept up to MAX_UPLOAD photos field named 'photos' (multer parses before validation)
     studentUpload.array("photos", 6)(req, res, async (err) => {
       if (err) {
         return res.status(400).json({
@@ -91,7 +90,6 @@ const registerStudent = async (req, res) => {
           message: err.message,
         });
       }
-      console.log("Request Body:", req.body);
 
       const {
         studentId,
@@ -142,17 +140,10 @@ const registerStudent = async (req, res) => {
       const student = new Student(studentData);
       await student.save();
 
-
-
-      // call api here 
-
       try {
-        const total = await Student.countDocuments();
-
-        console.log("total ", total)
-
-        const response = await axios.post("http://127.0.0.1:8000/sync-embeddings");
-        console.log(" response.data", response.data)
+        const response = await axios.post(
+          "http://127.0.0.1:8000/sync-embeddings"
+        );
 
         if (response.data && response.data.success === "True") {
           // ✅ Proceed only if response success = True
@@ -167,7 +158,6 @@ const registerStudent = async (req, res) => {
             data: student,
           });
         } else {
-          // ❌ Sync failed
           console.error("Embedding sync failed:", response.data);
           return res.status(500).json({
             error: true,
@@ -181,7 +171,7 @@ const registerStudent = async (req, res) => {
           message: "Student saved but failed to call sync API",
         });
       }
-    })
+    });
   } catch (error) {
     console.error("Error registering student:", error);
     res.status(500).json({
@@ -275,14 +265,16 @@ const toggleStudentStatus = async (req, res) => {
     // Emit real-time update
     req.io.emit("student_updated", {
       student: student,
-      message: `Student ${newStatus ? "activated" : "deactivated"
-        } successfully`,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
     });
 
     res.json({
       success: true,
-      message: `Student ${newStatus ? "activated" : "deactivated"
-        } successfully`,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
       data: student,
     });
   } catch (error) {
