@@ -16,7 +16,6 @@ interface KnownDetection {
   className?: string;
   division?: string;
   rollNumber?: string;
-  photo?: string;
   photos?: string[];
   cameraId?: string;
   time: string; // ISO
@@ -26,7 +25,7 @@ interface KnownDetection {
 interface UnknownDetection {
   kind: "unknown";
   id: string; // unknown face id
-  photo?: string;
+  photos?: string[];
   cameraId?: string;
   time: string; // ISO
   confidence?: number;
@@ -62,7 +61,6 @@ export function LastDetectionCard({ showOverlay }: { showOverlay: boolean }) {
         className: data?.student?.class,
         division: data?.student?.division,
         rollNumber: data?.student?.rollNumber,
-        photo: data?.student?.photo,
         photos: data?.student?.photos,
         cameraId: data?.attendance?.cameraId,
         time: now,
@@ -79,7 +77,7 @@ export function LastDetectionCard({ showOverlay }: { showOverlay: boolean }) {
       const det: UnknownDetection = {
         kind: "unknown",
         id: data?.unknownFace?._id || "",
-        photo: data?.unknownFace?.photo,
+        photos: data?.unknownFace?.photos,
         cameraId: data?.unknownFace?.cameraId,
         time: data?.unknownFace?.timestamp || new Date().toISOString(),
         confidence: data?.unknownFace?.confidence,
@@ -104,6 +102,8 @@ export function LastDetectionCard({ showOverlay }: { showOverlay: boolean }) {
     if (!lastDetection) return "Last Detection";
     return lastDetection.kind === "known" ? "Last Entry" : "Unknown Face";
   }, [lastDetection]);
+
+  console.log("lastDetection===", lastDetection);
 
   return showOverlay ? (
     <Card className="mt-5 relative overflow-hidden bg-black/90 backdrop-blur-sm border border-gray-700 shadow-2xl max-w-sm mx-auto">
@@ -140,11 +140,9 @@ export function LastDetectionCard({ showOverlay }: { showOverlay: boolean }) {
             {/* Large Image at Top */}
             <div className="text-center mb-6">
               <div className="relative w-32 h-32 mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center shadow-lg border border-gray-700">
-                {lastDetection.photo || (lastDetection as any).photos?.[0] ? (
+                {lastDetection.photos || (lastDetection as any).photos?.[0] ? (
                   <Image
-                    src={getPicUrl(
-                      lastDetection.photo || (lastDetection as any).photos?.[0]
-                    )}
+                    src={getPicUrl(lastDetection.photos[0])}
                     alt="Face"
                     width={128}
                     height={128}

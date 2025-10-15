@@ -198,7 +198,7 @@ export function StreamPlayer({
     try {
       // Test data for attendance marking
       const testData = {
-        studentId: "68e6972728e7a1f953567733", // Example ObjectId - you may need to replace with actual student ID
+        studentId: "68e57a3282accb11ff5d1a25", // Example ObjectId - you may need to replace with actual student ID
         cameraId: "camera1",
         confidence: 0.95,
       };
