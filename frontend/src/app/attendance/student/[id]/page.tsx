@@ -633,7 +633,7 @@ export default function StudentAttendancePage() {
                       </span>
                     </td>
                     <td className="py-2 pr-2">
-                      <code className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded text-black">
                         {record.cameraId}
                       </code>
                     </td>

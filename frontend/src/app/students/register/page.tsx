@@ -19,7 +19,7 @@ export default function RegisterStudentPage() {
   const [streaming, setStreaming] = useState(false);
   const [capturedBlobs, setCapturedBlobs] = useState<Blob[]>([]);
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>("rdtfjghm5jrymhg");
+  const [errorMsg, setErrorMsg] = useState<string>("");
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
