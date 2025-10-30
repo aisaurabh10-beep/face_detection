@@ -10,7 +10,7 @@ const markAttendance = async (req, res) => {
     // Find the student by studentId or _id
     // const student = await Student.findOne({ studentId });
     const student = await Student.findOne({
-      $or: [{ studentId: studentId }, { _id: studentId }],
+      $or: [{ studentId: studentId }],
     });
 
     if (!student) {
@@ -155,18 +155,28 @@ const getStudentAttendance = async (req, res) => {
     const filter = { studentId };
 
     if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0); // 00:00:00.000 → start of day
+
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // 23:59:59.999 → end of day
+
+      console.log(start, end);
+
       filter.date = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
+        $gte: start,
+        $lte: end,
       };
     }
 
     const attendance = await Attendance.find(filter)
       .populate("studentId", "firstName lastName studentId class rollNumber")
       .sort({ date: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
+      // .limit(limit * 1)
+      // .skip((page - 1) * limit)
       .lean();
+
+    console.log("attendance", attendance, studentId)
 
     const total = await Attendance.countDocuments(filter);
 
@@ -289,9 +299,9 @@ const getDailyClassWise = async (req, res) => {
 
     const avgPresentPercentage = classes.length
       ? classes.reduce(
-          (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
-          0
-        ) / classes.length
+        (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
+        0
+      ) / classes.length
       : 0;
 
     const summary = {
