@@ -212,8 +212,14 @@ class FaceProcessor:
                         # Only update timestamp if API call was successful
                         self.last_seen_times[student_id] = current_time
                 
+
+                # mark_minutes = config.getint('Performance', 'attendance_mark_minutes')
+
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                # cv2.putText(frame, student_id, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
                 cv2.putText(frame, student_id, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+
             else:
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)
                 cv2.putText(frame, "Unknown", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
