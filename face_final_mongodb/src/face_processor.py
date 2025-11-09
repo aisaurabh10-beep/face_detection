@@ -117,6 +117,8 @@ import numpy as np
 from deepface import DeepFace
 from sklearn.metrics.pairwise import cosine_similarity
 from src.api_manager import post_attendance # <-- IMPORT the new function
+from pymongo import MongoClient
+import configparser
 
 class FaceProcessor:
     """Manages the face detection and recognition pipeline for each frame."""
@@ -212,13 +214,33 @@ class FaceProcessor:
                         # Only update timestamp if API call was successful
                         self.last_seen_times[student_id] = current_time
                 
+                
+
+                ## changing id  with name 
+                config = configparser.ConfigParser()
+                config.read("config.ini")
+                mongo_uri = config.get('MongoDB', 'uri')
+                client = MongoClient(mongo_uri)
+                db = client["attendance_poc"]
+                students_collection = db["students"]
+
+                student_id = str(student_id)
+
+                student_doc = students_collection.find_one({"studentId": student_id})
+
+                if student_doc:
+                    first_name = student_doc.get("firstName")
+                    print("First name:", first_name)
+                else:
+                    print(f"No student found with ID {student_id}")
+
 
                 # mark_minutes = config.getint('Performance', 'attendance_mark_minutes')
 
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
                 # cv2.putText(frame, student_id, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-                cv2.putText(frame, student_id, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                cv2.putText(frame, first_name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
             else:
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 2)

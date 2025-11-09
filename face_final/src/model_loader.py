@@ -120,7 +120,7 @@ def initialize_models_and_db(config):
         for img_file in os.listdir(person_path):
             img_path = os.path.join(person_path, img_file)
             try:
-                rep = DeepFace.represent(img_path=img_path, model_name="ArcFace", enforce_detection=False)
+                rep = DeepFace.represent(img_path=img_path, model_name="VGG-Face", enforce_detection=False)
                 if rep and "embedding" in rep[0]:
                     embeddings_db.append(rep[0]["embedding"])
                     names.append(person_folder)

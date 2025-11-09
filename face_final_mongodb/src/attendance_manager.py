@@ -53,7 +53,9 @@ def mark_attendance(name: str, yolo_conf: float, deepface_dist: float, collectio
     """
     now = datetime.datetime.now()
     mark_minutes = config.getint('Performance', 'attendance_mark_minutes')
-    time_limit = now - datetime.timedelta(minutes=mark_minutes)
+    # time_limit = now - datetime.timedelta(minutes=mark_minutes)
+    time_limit = now - datetime.timedelta(seconds=mark_minutes)
+
 
 
 

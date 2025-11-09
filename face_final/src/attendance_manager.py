@@ -27,7 +27,7 @@ def mark_attendance(name, yolo_conf, deepface_dist, config):
     marked_recently = False
     if not df.empty and 'Date' in df.columns:
         df['Timestamp'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], errors='coerce')
-        time_limit = now - datetime.timedelta(minutes=mark_minutes)
+        time_limit = now - datetime.timedelta(seconds=mark_minutes)
         recent_entries = df[(df['Name'] == name) & (df['Timestamp'] > time_limit)]
         marked_recently = not recent_entries.empty
 
