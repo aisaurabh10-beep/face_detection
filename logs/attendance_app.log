@@ -1,0 +1,345 @@
+2025-11-08 20:33:14,321 INFO __main__: Starting Attendance Pipeline
+2025-11-08 20:33:15,527 CRITICAL __main__: Failed to initialize models/embeddings: [Errno 2] No such file or directory: 'models\\yolov8n-face-lindevs.pt'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 71, in run_pipeline
+    yolo_model, embeddings_db, names = initialize_models_and_db(config)
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 16, in initialize_models_and_db
+    yolo_model = YOLO(yolo_path)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\models\yolo\model.py", line 81, in __init__
+    super().__init__(model=model, task=task, verbose=verbose)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\engine\model.py", line 149, in __init__
+    self._load(model, task=task)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\engine\model.py", line 288, in _load
+    self.model, self.ckpt = load_checkpoint(weights)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\nn\tasks.py", line 1461, in load_checkpoint
+    ckpt, weight = torch_safe_load(weight)  # load ckpt
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\nn\tasks.py", line 1409, in torch_safe_load
+    ckpt = torch_load(file, map_location="cpu")
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\ultralytics\utils\patches.py", line 116, in torch_load
+    return torch.load(*args, **kwargs)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\torch\serialization.py", line 1484, in load
+    with _open_file_like(f, "rb") as opened_file:
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\torch\serialization.py", line 759, in _open_file_like
+    return _open_file(name_or_buffer, mode)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\torch\serialization.py", line 740, in __init__
+    super().__init__(open(name, mode))
+FileNotFoundError: [Errno 2] No such file or directory: 'models\\yolov8n-face-lindevs.pt'
+2025-11-08 20:33:58,111 INFO __main__: Starting Attendance Pipeline
+2025-11-08 20:33:58,194 INFO model_loader: Loaded YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 20:33:58,194 INFO model_loader: Building enrollment embeddings from dataset at dataset/
+2025-11-08 20:33:58,194 CRITICAL __main__: Failed to initialize models/embeddings: No module named 'deepface'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 71, in run_pipeline
+    yolo_model, embeddings_db, names = initialize_models_and_db(config)
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 31, in initialize_models_and_db
+    from deepface import DeepFace
+ModuleNotFoundError: No module named 'deepface'
+2025-11-08 20:35:41,591 INFO __main__: Starting Attendance Pipeline
+2025-11-08 20:35:41,712 INFO model_loader: Loaded YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 20:35:41,712 INFO model_loader: Building enrollment embeddings from dataset at dataset/
+2025-11-08 20:35:48,297 CRITICAL __main__: Failed to initialize models/embeddings: You have tensorflow 2.20.0 and this requires tf-keras package. Please run `pip install tf-keras` or downgrade your tensorflow.
+Traceback (most recent call last):
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\retinaface\commons\package_utils.py", line 19, in validate_for_keras3
+    import tf_keras
+ModuleNotFoundError: No module named 'tf_keras'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 71, in run_pipeline
+    yolo_model, embeddings_db, names = initialize_models_and_db(config)
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 31, in initialize_models_and_db
+    from deepface import DeepFace
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\DeepFace.py", line 20, in <module>
+    from deepface.modules import (
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\modules\modeling.py", line 17, in <module>
+    from deepface.models.face_detection import (
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\models\face_detection\RetinaFace.py", line 6, in <module>
+    from retinaface import RetinaFace as rf
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\retinaface\RetinaFace.py", line 20, in <module>
+    package_utils.validate_for_keras3()
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\retinaface\commons\package_utils.py", line 24, in validate_for_keras3
+    raise ValueError(
+ValueError: You have tensorflow 2.20.0 and this requires tf-keras package. Please run `pip install tf-keras` or downgrade your tensorflow.
+2025-11-08 20:37:58,821 INFO __main__: Starting Attendance Pipeline
+2025-11-08 20:37:58,935 INFO model_loader: Loaded YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 20:37:58,935 INFO model_loader: Building enrollment embeddings from dataset at dataset/
+2025-11-08 20:38:06,807 WARNING tensorflow: From C:\Users\User\anaconda3\envs\myenv\lib\site-packages\tf_keras\src\losses.py:2976: The name tf.losses.sparse_softmax_cross_entropy is deprecated. Please use tf.compat.v1.losses.sparse_softmax_cross_entropy instead.
+
+2025-11-08 20:38:15,779 INFO model_loader: Saved embeddings cache: dataset/.cache\embeddings.npy (5 entries)
+2025-11-08 20:38:15,801 INFO __main__: AttendanceDB initialized.
+2025-11-08 20:38:15,809 INFO __main__: FaceProcessor instantiated.
+2025-11-08 20:38:15,809 INFO __main__: Attempting to start VideoStream (src=0) attempt 1
+2025-11-08 20:38:19,283 INFO __main__: Video stream started.
+2025-11-08 20:38:21,333 INFO attendance_manager: Attendance recorded: saurbh
+2025-11-08 20:38:24,508 INFO __main__: Frames processed=18, fps=3.51
+2025-11-08 20:38:29,724 INFO __main__: Frames processed=40, fps=4.22
+2025-11-08 20:38:34,780 INFO __main__: Frames processed=52, fps=2.37
+2025-11-08 20:38:39,787 INFO __main__: Frames processed=68, fps=3.20
+2025-11-08 20:38:45,387 INFO __main__: Frames processed=92, fps=4.29
+2025-11-08 20:38:47,773 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203847_770233.jpg
+2025-11-08 20:38:50,600 INFO __main__: Frames processed=108, fps=3.07
+2025-11-08 20:38:55,723 INFO __main__: Frames processed=124, fps=3.12
+2025-11-08 20:38:58,044 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203858_044886.jpg
+2025-11-08 20:39:01,965 INFO __main__: Frames processed=144, fps=3.20
+2025-11-08 20:39:07,052 INFO __main__: Frames processed=164, fps=3.93
+2025-11-08 20:39:08,455 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203908_453573.jpg
+2025-11-08 20:39:12,764 INFO __main__: Frames processed=186, fps=3.85
+2025-11-08 20:39:17,966 INFO __main__: Frames processed=214, fps=5.38
+2025-11-08 20:39:18,715 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203918_713284.jpg
+2025-11-08 20:39:23,152 INFO __main__: Frames processed=234, fps=3.86
+2025-11-08 20:39:29,147 INFO __main__: Frames processed=254, fps=3.34
+2025-11-08 20:39:29,147 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203929_140656.jpg
+2025-11-08 20:39:34,293 INFO __main__: Frames processed=274, fps=3.89
+2025-11-08 20:39:39,180 INFO face_processor: Saved unknown face: unknown_faces/unknown_20251108_203939_180364.jpg
+2025-11-08 20:39:39,903 INFO __main__: Frames processed=296, fps=3.92
+2025-11-08 20:39:44,090 INFO attendance_manager: Attendance recorded: saurbh
+2025-11-08 20:39:45,291 INFO __main__: Frames processed=318, fps=4.08
+2025-11-08 20:39:47,659 INFO __main__: Exit requested via 'q' key.
+2025-11-08 20:39:47,659 INFO __main__: Shutting down pipeline...
+2025-11-08 20:39:48,166 INFO __main__: Application stopped.
+2025-11-08 22:25:30,276 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:25:30,276 - CRITICAL - __main__:71 - Failed to initialize models/embeddings: No module named 'ultralytics'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 69, in run_pipeline
+    yolo_model, embeddings_db, names, arcface_model = initialize_models_and_db(config)
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 16, in initialize_models_and_db
+    from ultralytics import YOLO
+ModuleNotFoundError: No module named 'ultralytics'
+2025-11-08 22:26:14,666 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:26:18,838 - CRITICAL - __main__:71 - Failed to initialize models/embeddings: module 'tensorflow' has no attribute '__version__'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 69, in run_pipeline
+    yolo_model, embeddings_db, names, arcface_model = initialize_models_and_db(config)
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 17, in initialize_models_and_db
+    from deepface import DeepFace
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\DeepFace.py", line 20, in <module>
+    from deepface.modules import (
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\modules\modeling.py", line 5, in <module>
+    from deepface.models.facial_recognition import (
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\models\facial_recognition\VGGFace.py", line 8, in <module>
+    from deepface.commons import package_utils, weight_utils
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\commons\weight_utils.py", line 15, in <module>
+    tf_version = package_utils.get_tf_major_version()
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\deepface\commons\package_utils.py", line 19, in get_tf_major_version
+    return int(tf.__version__.split(".", maxsplit=1)[0])
+AttributeError: module 'tensorflow' has no attribute '__version__'
+2025-11-08 22:32:43,159 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:32:46,159 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 22:32:46,361 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: No module named 'onnxruntime'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 30, in _load_arcface_model
+    import onnxruntime as ort
+ModuleNotFoundError: No module named 'onnxruntime'
+2025-11-08 22:32:46,361 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 22:32:46,388 - INFO - model_loader:87 - Loaded 5 embeddings for 1 unique names
+2025-11-08 22:32:46,390 - CRITICAL - __main__:71 - Failed to initialize models/embeddings: too many values to unpack (expected 4)
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\main.py", line 69, in run_pipeline
+    yolo_model, embeddings_db, names, arcface_model = initialize_models_and_db(config)
+ValueError: too many values to unpack (expected 4)
+2025-11-08 22:34:25,876 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:34:28,652 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 22:34:28,747 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: No module named 'onnxruntime'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 30, in _load_arcface_model
+    import onnxruntime as ort
+ModuleNotFoundError: No module named 'onnxruntime'
+2025-11-08 22:34:28,748 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 22:34:28,749 - INFO - model_loader:87 - Loaded 5 embeddings for 1 unique names
+2025-11-08 22:34:28,765 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 22:34:28,770 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 22:34:31,740 - INFO - root:121 - Video stream started.
+2025-11-08 22:34:42,912 - INFO - root:193 - Frames=2 fps=0.18
+2025-11-08 22:34:42,912 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223442_912389.jpg
+2025-11-08 22:34:47,929 - INFO - root:193 - Frames=36 fps=6.78
+2025-11-08 22:34:53,088 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223453_088751.jpg
+2025-11-08 22:34:53,098 - INFO - root:193 - Frames=68 fps=6.19
+2025-11-08 22:34:58,496 - INFO - root:193 - Frames=98 fps=5.56
+2025-11-08 22:35:03,374 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223503_373456.jpg
+2025-11-08 22:35:03,611 - INFO - root:193 - Frames=124 fps=5.08
+2025-11-08 22:35:08,798 - INFO - root:193 - Frames=162 fps=7.32
+2025-11-08 22:35:13,982 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223513_982811.jpg
+2025-11-08 22:35:13,998 - INFO - root:193 - Frames=198 fps=6.92
+2025-11-08 22:35:19,485 - INFO - root:193 - Frames=234 fps=6.56
+2025-11-08 22:35:24,459 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223524_459367.jpg
+2025-11-08 22:35:24,663 - INFO - root:193 - Frames=266 fps=6.18
+2025-11-08 22:35:28,445 - INFO - attendance_manager:66 - Attendance recorded: saurbh
+2025-11-08 22:35:29,849 - INFO - root:193 - Frames=298 fps=6.17
+2025-11-08 22:35:34,623 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223534_623589.jpg
+2025-11-08 22:35:34,853 - INFO - root:193 - Frames=326 fps=5.60
+2025-11-08 22:35:40,144 - INFO - root:193 - Frames=360 fps=6.43
+2025-11-08 22:35:44,703 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_223544_703301.jpg
+2025-11-08 22:35:45,663 - INFO - root:193 - Frames=396 fps=6.52
+2025-11-08 22:35:50,752 - INFO - root:193 - Frames=424 fps=5.50
+2025-11-08 22:35:51,800 - INFO - root:187 - Exit requested via 'q'.
+2025-11-08 22:35:51,800 - INFO - root:200 - Shutting down...
+2025-11-08 22:35:52,380 - INFO - root:220 - App stopped.
+2025-11-08 22:54:42,177 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:54:44,883 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 22:54:44,969 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: No module named 'onnxruntime'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 30, in _load_arcface_model
+    import onnxruntime as ort
+ModuleNotFoundError: No module named 'onnxruntime'
+2025-11-08 22:54:44,969 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 22:54:44,978 - INFO - model_loader:87 - Loaded 5 embeddings for 1 unique names
+2025-11-08 22:54:44,980 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 22:54:44,984 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 22:54:47,909 - INFO - root:121 - Video stream started.
+2025-11-08 22:54:59,189 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225459_188131.jpg
+2025-11-08 22:54:59,199 - INFO - root:193 - Frames=2 fps=0.18
+2025-11-08 22:55:04,265 - INFO - root:193 - Frames=30 fps=5.53
+2025-11-08 22:55:09,782 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225509_782859.jpg
+2025-11-08 22:55:09,782 - INFO - root:193 - Frames=56 fps=4.71
+2025-11-08 22:55:14,992 - INFO - root:193 - Frames=82 fps=4.99
+2025-11-08 22:55:19,798 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225519_798382.jpg
+2025-11-08 22:55:20,044 - INFO - root:193 - Frames=106 fps=4.75
+2025-11-08 22:55:25,185 - INFO - root:193 - Frames=130 fps=4.67
+2025-11-08 22:55:30,214 - INFO - root:193 - Frames=156 fps=5.17
+2025-11-08 22:55:30,932 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225530_917405.jpg
+2025-11-08 22:55:35,540 - INFO - root:193 - Frames=188 fps=6.01
+2025-11-08 22:55:40,823 - INFO - root:193 - Frames=226 fps=7.19
+2025-11-08 22:55:41,674 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225541_674301.jpg
+2025-11-08 22:55:45,997 - INFO - root:193 - Frames=262 fps=6.96
+2025-11-08 22:55:51,211 - INFO - root:193 - Frames=292 fps=5.75
+2025-11-08 22:55:52,059 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225552_059033.jpg
+2025-11-08 22:55:56,607 - INFO - root:193 - Frames=328 fps=6.67
+2025-11-08 22:56:01,608 - INFO - root:193 - Frames=369 fps=8.20
+2025-11-08 22:56:02,874 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225602_874265.jpg
+2025-11-08 22:56:06,777 - INFO - root:193 - Frames=406 fps=7.16
+2025-11-08 22:56:11,817 - INFO - root:193 - Frames=446 fps=7.94
+2025-11-08 22:56:13,071 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225613_065737.jpg
+2025-11-08 22:56:17,284 - INFO - root:193 - Frames=484 fps=6.95
+2025-11-08 22:56:22,442 - INFO - root:193 - Frames=520 fps=6.98
+2025-11-08 22:56:23,293 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225623_293815.jpg
+2025-11-08 22:56:27,523 - INFO - root:193 - Frames=556 fps=7.09
+2025-11-08 22:56:30,934 - INFO - root:187 - Exit requested via 'q'.
+2025-11-08 22:56:30,935 - INFO - root:200 - Shutting down...
+2025-11-08 22:56:31,691 - INFO - root:220 - App stopped.
+2025-11-08 22:57:42,957 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:57:46,044 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 22:57:46,131 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: No module named 'onnxruntime'
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 30, in _load_arcface_model
+    import onnxruntime as ort
+ModuleNotFoundError: No module named 'onnxruntime'
+2025-11-08 22:57:46,139 - INFO - model_loader:91 - No cache found. Building embeddings from dataset at dataset/
+2025-11-08 22:57:51,915 - INFO - model_loader:103 - DeepFace available; will use it to compute embeddings (slow).
+2025-11-08 22:57:59,691 - WARNING - model_loader:138 - Failed to embed dataset/onkar\WIN_20251108_22_49_25_Pro.jpg: Face could not be detected in dataset/onkar\WIN_20251108_22_49_25_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:02,320 - WARNING - model_loader:138 - Failed to embed dataset/saurbh\WIN_20251108_22_56_57_Pro.jpg: Face could not be detected in dataset/saurbh\WIN_20251108_22_56_57_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:03,650 - WARNING - model_loader:138 - Failed to embed dataset/saurbh\WIN_20251108_22_57_01_Pro.jpg: Face could not be detected in dataset/saurbh\WIN_20251108_22_57_01_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:04,989 - WARNING - model_loader:138 - Failed to embed dataset/saurbh\WIN_20251108_22_57_04_Pro.jpg: Face could not be detected in dataset/saurbh\WIN_20251108_22_57_04_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:05,513 - WARNING - model_loader:138 - Failed to embed dataset/saurbh\WIN_20251108_22_57_06_Pro.jpg: Face could not be detected in dataset/saurbh\WIN_20251108_22_57_06_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:06,033 - WARNING - model_loader:138 - Failed to embed dataset/saurbh\WIN_20251108_22_57_07_Pro.jpg: Face could not be detected in dataset/saurbh\WIN_20251108_22_57_07_Pro.jpg.Please confirm that the picture is a face photo or consider to set enforce_detection param to False.
+2025-11-08 22:58:06,033 - INFO - model_loader:157 - Saved embeddings cache to dataset/.cache\embeddings.npy
+2025-11-08 22:58:06,051 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 22:58:06,051 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 22:58:09,005 - INFO - root:121 - Video stream started.
+2025-11-08 22:58:10,240 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225810_240259.jpg
+2025-11-08 22:58:11,187 - INFO - attendance_manager:66 - Attendance recorded: onkar
+2025-11-08 22:58:14,478 - INFO - root:193 - Frames=20 fps=3.70
+2025-11-08 22:58:19,501 - INFO - root:193 - Frames=44 fps=4.78
+2025-11-08 22:58:21,964 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225821_950442.jpg
+2025-11-08 22:58:23,305 - INFO - attendance_manager:66 - Attendance recorded: saurbh
+2025-11-08 22:58:24,551 - INFO - root:193 - Frames=68 fps=4.75
+2025-11-08 22:58:29,302 - INFO - root:35 - Signal received: 2
+2025-11-08 22:58:29,486 - INFO - root:200 - Shutting down...
+2025-11-08 22:58:30,342 - INFO - root:220 - App stopped.
+2025-11-08 22:58:52,309 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 22:58:55,149 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 22:58:55,350 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from models/arcface_model.onnx failed:Load model models/arcface_model.onnx failed. File doesn't exist
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 31, in _load_arcface_model
+    sess = ort.InferenceSession(arcface_path, providers=['CPUExecutionProvider'])
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 485, in __init__
+    self._create_inference_session(providers, provider_options, disabled_optimizers)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 573, in _create_inference_session
+    sess = C.InferenceSession(session_options, self._model_path, True, self._read_config_from_model)
+onnxruntime.capi.onnxruntime_pybind11_state.NoSuchFile: [ONNXRuntimeError] : 3 : NO_SUCHFILE : Load model from models/arcface_model.onnx failed:Load model models/arcface_model.onnx failed. File doesn't exist
+2025-11-08 22:58:55,362 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 22:58:55,396 - INFO - model_loader:87 - Loaded 8 embeddings for 2 unique names
+2025-11-08 22:58:55,405 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 22:58:55,410 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 22:58:58,390 - INFO - root:121 - Video stream started.
+2025-11-08 22:59:10,753 - INFO - root:193 - Frames=14 fps=1.14
+2025-11-08 22:59:10,758 - INFO - attendance_manager:66 - Attendance recorded: onkar
+2025-11-08 22:59:11,628 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225911_623193.jpg
+2025-11-08 22:59:15,908 - INFO - root:193 - Frames=46 fps=6.21
+2025-11-08 22:59:21,401 - INFO - root:193 - Frames=74 fps=5.10
+2025-11-08 22:59:25,440 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225925_432776.jpg
+2025-11-08 22:59:26,879 - INFO - root:193 - Frames=98 fps=4.38
+2025-11-08 22:59:31,966 - INFO - root:193 - Frames=120 fps=4.32
+2025-11-08 22:59:35,471 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_225935_457233.jpg
+2025-11-08 22:59:37,183 - INFO - root:193 - Frames=142 fps=4.22
+2025-11-08 22:59:42,286 - INFO - root:193 - Frames=164 fps=4.31
+2025-11-08 22:59:46,177 - INFO - attendance_manager:66 - Attendance recorded: saurbh
+2025-11-08 22:59:47,469 - INFO - root:193 - Frames=188 fps=4.63
+2025-11-08 22:59:52,672 - INFO - root:193 - Frames=212 fps=4.61
+2025-11-08 22:59:55,611 - INFO - root:35 - Signal received: 2
+2025-11-08 22:59:55,655 - INFO - root:200 - Shutting down...
+2025-11-08 22:59:56,329 - INFO - root:220 - App stopped.
+2025-11-08 23:02:39,317 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 23:02:42,330 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 23:02:42,497 - ERROR - model_loader:53 - Failed to load arcface model from models/arcface_model.onnx: [ONNXRuntimeError] : 7 : INVALID_PROTOBUF : Load model from models/arcface_model.onnx failed:Protobuf parsing failed.
+Traceback (most recent call last):
+  File "D:\bharthatechno\git\face_detection\model_loader.py", line 31, in _load_arcface_model
+    sess = ort.InferenceSession(arcface_path, providers=['CPUExecutionProvider'])
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 485, in __init__
+    self._create_inference_session(providers, provider_options, disabled_optimizers)
+  File "C:\Users\User\anaconda3\envs\myenv\lib\site-packages\onnxruntime\capi\onnxruntime_inference_collection.py", line 573, in _create_inference_session
+    sess = C.InferenceSession(session_options, self._model_path, True, self._read_config_from_model)
+onnxruntime.capi.onnxruntime_pybind11_state.InvalidProtobuf: [ONNXRuntimeError] : 7 : INVALID_PROTOBUF : Load model from models/arcface_model.onnx failed:Protobuf parsing failed.
+2025-11-08 23:02:42,497 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 23:02:42,512 - INFO - model_loader:87 - Loaded 8 embeddings for 2 unique names
+2025-11-08 23:02:42,514 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 23:02:42,521 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 23:02:45,617 - INFO - root:121 - Video stream started.
+2025-11-08 23:02:56,664 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230256_664077.jpg
+2025-11-08 23:02:56,664 - INFO - root:193 - Frames=2 fps=0.18
+2025-11-08 23:02:57,510 - INFO - attendance_manager:66 - Attendance recorded: onkar
+2025-11-08 23:03:02,193 - INFO - root:193 - Frames=38 fps=6.51
+2025-11-08 23:03:07,225 - INFO - root:193 - Frames=70 fps=6.36
+2025-11-08 23:03:12,239 - INFO - root:193 - Frames=94 fps=4.79
+2025-11-08 23:03:17,429 - INFO - root:193 - Frames=118 fps=4.62
+2025-11-08 23:03:22,662 - INFO - root:193 - Frames=144 fps=4.97
+2025-11-08 23:03:24,535 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230324_535688.jpg
+2025-11-08 23:03:28,164 - INFO - root:193 - Frames=170 fps=4.73
+2025-11-08 23:03:33,284 - INFO - root:193 - Frames=196 fps=5.08
+2025-11-08 23:03:35,494 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230335_493822.jpg
+2025-11-08 23:03:38,481 - INFO - root:193 - Frames=222 fps=5.00
+2025-11-08 23:03:44,086 - INFO - root:193 - Frames=248 fps=4.64
+2025-11-08 23:03:46,597 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230346_597254.jpg
+2025-11-08 23:03:49,365 - INFO - root:193 - Frames=272 fps=4.55
+2025-11-08 23:03:54,392 - INFO - root:193 - Frames=306 fps=6.76
+2025-11-08 23:03:58,248 - INFO - attendance_manager:66 - Attendance recorded: onkar
+2025-11-08 23:03:59,465 - INFO - root:193 - Frames=342 fps=7.10
+2025-11-08 23:04:01,641 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230401_630784.jpg
+2025-11-08 23:04:01,848 - INFO - root:187 - Exit requested via 'q'.
+2025-11-08 23:04:01,849 - INFO - root:200 - Shutting down...
+2025-11-08 23:04:02,805 - INFO - root:220 - App stopped.
+2025-11-08 23:08:23,948 - INFO - __main__:66 - Starting Attendance Pipeline
+2025-11-08 23:08:26,875 - INFO - model_loader:11 - Loading YOLO model from models/yolov8s-face-lindevs.pt
+2025-11-08 23:08:27,268 - INFO - model_loader:40 - Loaded ArcFace ONNX model: models/arcface_model.onnx
+2025-11-08 23:08:27,268 - INFO - model_loader:83 - Loading cached embeddings from dataset/.cache\embeddings.npy
+2025-11-08 23:08:27,283 - INFO - model_loader:87 - Loaded 8 embeddings for 2 unique names
+2025-11-08 23:08:27,286 - INFO - __main__:92 - AttendanceDB initialized at attendance/attendance.db
+2025-11-08 23:08:27,291 - INFO - root:118 - Starting VideoStream 0 attempt=1
+2025-11-08 23:08:30,336 - INFO - root:121 - Video stream started.
+2025-11-08 23:08:31,466 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230831_463956.jpg
+2025-11-08 23:08:35,415 - INFO - root:193 - Frames=38 fps=7.57
+2025-11-08 23:08:40,518 - INFO - root:193 - Frames=86 fps=9.41
+2025-11-08 23:08:41,826 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230841_825677.jpg
+2025-11-08 23:08:45,728 - INFO - root:193 - Frames=134 fps=9.21
+2025-11-08 23:08:50,920 - INFO - root:193 - Frames=182 fps=9.25
+2025-11-08 23:08:52,227 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230852_225804.jpg
+2025-11-08 23:08:55,944 - INFO - root:193 - Frames=228 fps=9.16
+2025-11-08 23:09:01,009 - INFO - root:193 - Frames=274 fps=9.08
+2025-11-08 23:09:02,235 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230902_233449.jpg
+2025-11-08 23:09:06,264 - INFO - root:193 - Frames=320 fps=8.75
+2025-11-08 23:09:11,352 - INFO - root:193 - Frames=366 fps=9.04
+2025-11-08 23:09:12,311 - INFO - face_processor:435 - Saved unknown face: unknown_faces/unknown_20251108_230912_311243.jpg
+2025-11-08 23:09:16,390 - INFO - root:193 - Frames=410 fps=8.73
+2025-11-08 23:09:20,100 - INFO - root:187 - Exit requested via 'q'.
+2025-11-08 23:09:20,102 - INFO - root:200 - Shutting down...
+2025-11-08 23:09:20,745 - INFO - root:220 - App stopped.
