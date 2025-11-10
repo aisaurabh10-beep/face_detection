@@ -406,9 +406,18 @@ def _process_image(img, debug_save_path=None):
         return {"ok": False, "error": "landmark_index_error", "detail": str(e)}
 
     # Also provide simple align landmarks (separate set) if needed by caller
+    # align_landmarks = {
+    #     "left_eye_inner": (fl[133].x * w, fl[133].y * h) if len(fl) > 133 else None,
+    #     "right_eye_inner": (fl[362].x * w, fl[362].y * h) if len(fl) > 362 else None,
+    #     "nose": (fl[1].x * w, fl[1].y * h)
+    # }
+
+
+    # Also provide simple align landmarks (separate set) if needed by caller
+# Also provide simple align landmarks (separate set) if needed by caller
     align_landmarks = {
-        "left_eye_inner": (fl[133].x * w, fl[133].y * h) if len(fl) > 133 else None,
-        "right_eye_inner": (fl[362].x * w, fl[362].y * h) if len(fl) > 362 else None,
+        "left_eye": (fl[33].x * w, fl[33].y * h) if len(fl) > 33 else None,
+        "right_eye": (fl[263].x * w, fl[263].y * h) if len(fl) > 263 else None,
         "nose": (fl[1].x * w, fl[1].y * h)
     }
 

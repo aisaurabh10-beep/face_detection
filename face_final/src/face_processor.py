@@ -15,25 +15,50 @@ def align_face_from_landmarks(crop, lm_dict, output_size=(112, 112)):
     Aligns a face crop using 3 landmarks (eyes, nose).
     lm_dict: A dict from the mediapipe worker, e.g., {'left_eye': [x, y], ...}
     """
+    # try:
+    #     # --- FIX: Use the new landmark keys ---
+    #     if not lm_dict or not {'left_eye_inner', 'right_eye_inner', 'nose'}.issubset(lm_dict.keys()):
+    #         # Fallback: just resize if landmarks are missing
+    #         return cv2.resize(crop, output_size)
+            
+        # Source points from landmarks
+        # src = np.array([
+        #     lm_dict['left_eye_inner'],  # <-- CHANGED
+        #     lm_dict['right_eye_inner'], # <-- CHANGED
+        #     lm_dict['nose']
+        # ], dtype=np.float32)
+
+
+    """
+    Aligns a face crop using 3 landmarks (eyes, nose).
+    lm_dict: A dict from the mediapipe worker, e.g., {'left_eye': [x, y], ...}
+    """
     try:
-        # --- FIX: Use the new landmark keys ---
-        if not lm_dict or not {'left_eye_inner', 'right_eye_inner', 'nose'}.issubset(lm_dict.keys()):
+        # --- FIX: Use the correct 'left_eye' and 'right_eye' keys ---
+        if not lm_dict or not {'left_eye', 'right_eye', 'nose'}.issubset(lm_dict.keys()):
             # Fallback: just resize if landmarks are missing
             return cv2.resize(crop, output_size)
             
         # Source points from landmarks
         src = np.array([
-            lm_dict['left_eye_inner'],  # <-- CHANGED
-            lm_dict['right_eye_inner'], # <-- CHANGED
+            lm_dict['left_eye'],  # <-- FIXED
+            lm_dict['right_eye'], # <-- FIXED
             lm_dict['nose']
         ], dtype=np.float32)
 
         # Destination points (a standard 112x112 template)
 # Destination points (a standard 112x112 template)
+        # dst = np.array([
+        #     [output_size[0] * 0.34, output_size[1] * 0.46], # Left eye
+        #     [output_size[0] * 0.65, output_size[1] * 0.46], # Right eye
+        #     [output_size[0] * 0.50, output_size[1] * 0.64], # Nose
+        # ], dtype=np.float32)
+
+        # Destination points - this is a standard, well-tested 112x112 template
         dst = np.array([
-            [output_size[0] * 0.34, output_size[1] * 0.46], # Left eye
-            [output_size[0] * 0.65, output_size[1] * 0.46], # Right eye
-            [output_size[0] * 0.50, output_size[1] * 0.64], # Nose
+            [38.2946, 51.6963],  # Left eye
+            [73.5318, 51.5014],  # Right eye
+            [56.0252, 71.7366]   # Nose
         ], dtype=np.float32)
 
         # Get affine transform
@@ -178,7 +203,13 @@ class FaceProcessor:
 
         # --- *** FIX: Check if landmarks exist before aligning *** ---
         # The new align_landmarks uses 'left_eye_inner' and 'right_eye_inner'
-        if not landmarks or landmarks.get("left_eye_inner") is None or landmarks.get("right_eye_inner") is None:
+        # if not landmarks or landmarks.get("left_eye_inner") is None or landmarks.get("right_eye_inner") is None:
+        #     logging.warning("MediaPipe returned OK but alignment landmarks were missing.")
+        #     self._draw_box(frame, (x1, y1, x2, y2), "Landmark Error", "yellow")
+        #     return
+
+        # --- FIX: Check for the correct landmark keys ---
+        if not landmarks or landmarks.get("left_eye") is None or landmarks.get("right_eye") is None:
             logging.warning("MediaPipe returned OK but alignment landmarks were missing.")
             self._draw_box(frame, (x1, y1, x2, y2), "Landmark Error", "yellow")
             return
