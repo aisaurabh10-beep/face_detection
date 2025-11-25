@@ -33,6 +33,14 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get("/", (req, res) => {
+  res.json({
+    status: "OK",
+    message: "Attendance Backend POC is running",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const studentRoutes = require("./src/routes/studentRoutes");
 const attendanceRoutes = require("./src/routes/attendanceRoutes");
 const unknownFaceRoutes = require("./src/routes/unknownFaceRoutes");
@@ -45,13 +53,7 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/unknown-faces", unknownFaceRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    message: "Attendance Backend POC is running",
-    timestamp: new Date().toISOString(),
-  });
-});
+
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
@@ -82,6 +84,6 @@ const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
   console.log(`🚀 Backend POC running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📊 Health check: http://localhost:${PORT}`);
   connectDB();
 });

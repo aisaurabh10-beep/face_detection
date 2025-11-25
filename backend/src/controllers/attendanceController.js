@@ -5,12 +5,15 @@ const UnknownFace = require("../models/UnknownFace");
 // Mark attendance
 const markAttendance = async (req, res) => {
   try {
-    const { studentId, cameraId, confidence, deepface_distance } = req.body;
+    const { cameraId, confidence, deepface_distance } = req.body;
+    const studentId = req.body?.student_id || req.body?.studentId;
+
+    console.log("Marking attendance for studentId:", studentId);
 
     // Find the student by studentId or _id
     // const student = await Student.findOne({ studentId });
     const student = await Student.findOne({
-      $or: [{ studentId: studentId }],
+      $or: [{ studentId: studentId }, { _id: studentId }],
     });
 
     if (!student) {

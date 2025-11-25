@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import {  X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { CLASSES, getDivisionsForClass } from "@/lib/helper";
 import { MAX_UPLOAD, CAMERAS } from "@/lib/constants";
 import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
 import { AxiosError } from "axios";
+import Loader from "@/components/Loader";
 
 export default function RegisterStudentPage() {
   const router = useRouter();
@@ -68,88 +69,88 @@ export default function RegisterStudentPage() {
   };
 
   // Device camera functions (commented out)
-  // const startCamera = useCallback(async () => {
-  //   try {
-  //     const media = await navigator.mediaDevices.getUserMedia({ video: true });
-  //     if (videoRef.current) {
-  //       videoRef.current.srcObject = media as MediaStream;
-  //       await videoRef.current.play();
-  //       setStreaming(true);
-  //     }
-  //   } catch (err) {
-  //     setErrorMsg("Unable to access camera");
-  //   }
-  // }, []);
-
-  // const stopCamera = useCallback(() => {
-  //   const stream = videoRef.current?.srcObject as MediaStream | undefined;
-  //   stream?.getTracks().forEach((t) => t.stop());
-  //   setStreaming(false);
-  // }, []);
-
-  // Actual camera functions
-  
   const startCamera = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
-      return;
-
-    const firstCamera = CAMERAS[1];
-    if (!firstCamera) {
-      setStreamError("No cameras available");
-      return;
-    }
-
-    streamInitializedRef.current = true;
-    setStreamError("");
-
-    RTSPtoWebClient.setupStream(
-      firstCamera.id,
-      videoRef.current,
-      () => {
+    try {
+      const media = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = media as MediaStream;
+        await videoRef.current.play();
         setStreaming(true);
-
-        // Use setTimeout to ensure stream is fully established
-        setTimeout(() => {
-          // Also set the stream to the second video element
-          if (canvasRef.current && videoRef.current?.srcObject) {
-            canvasRef.current.srcObject = videoRef.current.srcObject;
-            canvasRef.current.play().catch(console.error);
-          } else {
-          }
-        }, 100);
-      },
-      (error) => {
-        console.error("WebRTC stream setup error:", error);
-        setStreamError(`WebRTC stream error: ${error.message}`);
-        setStreaming(false);
-        streamInitializedRef.current = false;
       }
-    );
+    } catch (err) {
+      setErrorMsg("Unable to access camera");
+    }
   }, []);
 
   const stopCamera = useCallback(() => {
+    const stream = videoRef.current?.srcObject as MediaStream | undefined;
+    stream?.getTracks().forEach((t) => t.stop());
     setStreaming(false);
-    streamInitializedRef.current = false;
-    setStreamError("");
-
-    if (videoRef.current) {
-      try {
-        const mediaStream = videoRef.current.srcObject as MediaStream | null;
-        if (mediaStream) {
-          mediaStream.getTracks().forEach((t) => t.stop());
-        }
-        videoRef.current.pause();
-        videoRef.current.srcObject = null;
-      } catch {}
-    }
-
-    if (canvasRef.current) {
-      try {
-        canvasRef.current.pause();
-        canvasRef.current.srcObject = null;
-      } catch {}
-    }
   }, []);
+
+  // Actual camera functions
+  
+  // const startCamera = useCallback(async () => {
+  //   if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
+  //     return;
+
+  //   const firstCamera = CAMERAS[1];
+  //   if (!firstCamera) {
+  //     setStreamError("No cameras available");
+  //     return;
+  //   }
+
+  //   streamInitializedRef.current = true;
+  //   setStreamError("");
+
+  //   RTSPtoWebClient.setupStream(
+  //     firstCamera.id,
+  //     videoRef.current,
+  //     () => {
+  //       setStreaming(true);
+
+  //       // Use setTimeout to ensure stream is fully established
+  //       setTimeout(() => {
+  //         // Also set the stream to the second video element
+  //         if (canvasRef.current && videoRef.current?.srcObject) {
+  //           canvasRef.current.srcObject = videoRef.current.srcObject;
+  //           canvasRef.current.play().catch(console.error);
+  //         } else {
+  //         }
+  //       }, 100);
+  //     },
+  //     (error) => {
+  //       console.error("WebRTC stream setup error:", error);
+  //       setStreamError(`WebRTC stream error: ${error.message}`);
+  //       setStreaming(false);
+  //       streamInitializedRef.current = false;
+  //     }
+  //   );
+  // }, []);
+
+  // const stopCamera = useCallback(() => {
+  //   setStreaming(false);
+  //   streamInitializedRef.current = false;
+  //   setStreamError("");
+
+  //   if (videoRef.current) {
+  //     try {
+  //       const mediaStream = videoRef.current.srcObject as MediaStream | null;
+  //       if (mediaStream) {
+  //         mediaStream.getTracks().forEach((t) => t.stop());
+  //       }
+  //       videoRef.current.pause();
+  //       videoRef.current.srcObject = null;
+  //     } catch {}
+  //   }
+
+  //   if (canvasRef.current) {
+  //     try {
+  //       canvasRef.current.pause();
+  //       canvasRef.current.srcObject = null;
+  //     } catch {}
+  //   }
+  // }, []);
 
   const captureFrame = useCallback(() => {
     if (!videoRef.current) return;
@@ -263,6 +264,10 @@ export default function RegisterStudentPage() {
       setSubmitting(false);
     }
   }, [canSubmit, form, capturedBlobs]);
+
+  if(submitting){
+    return <Loader/>;
+  }
 
   return (
     <div className="space-y-6">

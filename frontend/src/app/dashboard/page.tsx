@@ -7,6 +7,7 @@ import { DivisionAttendanceChart } from "@/components/dashboard/division-attenda
 import StreamPlayer from "@/components/camera/StreamPlayer";
 import { CAMERAS } from "@/lib/constants";
 import { Suspense } from "react";
+import { AllDetectionsCard } from "@/components/dashboard/all-detections";
 
 export default function DashboardPage() {
   return (
@@ -21,7 +22,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          <LastDetectionCard showOverlay={true}/>
+          <AllDetectionsCard/>
         </div>
       </div>
 
