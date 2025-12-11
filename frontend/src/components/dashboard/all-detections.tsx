@@ -2,10 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { getPicUrl } from "@/lib/helper";
 import { useSocket } from "@/lib/socket";
-import { User, Trash2 } from "lucide-react";
+import {
+  User,
+  Trash2,
+  Grid3x3,
+  List,
+  Check,
+  Maximize2,
+  Minimize2,
+} from "lucide-react";
+import { api, Student } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface KnownDetection {
   kind: "known";
@@ -38,6 +49,10 @@ const STORAGE_KEY = "all_detections";
 export function AllDetectionsCard() {
   const { on, off } = useSocket();
   const [detections, setDetections] = useState<Detection[]>([]);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Load detections from session storage on mount
   useEffect(() => {
@@ -64,6 +79,26 @@ export function AllDetectionsCard() {
       }
     }
   }, [detections]);
+
+  // Fetch all students when grid view is selected
+  useEffect(() => {
+    if (viewMode === "grid") {
+      const fetchAllStudents = async () => {
+        setLoadingStudents(true);
+        try {
+          const res = await api.getStudents({ limit: 1000 });
+          const data = res.data?.data;
+          setStudents(data?.students || []);
+        } catch (error) {
+          console.error("Error fetching students:", error);
+          setStudents([]);
+        } finally {
+          setLoadingStudents(false);
+        }
+      };
+      fetchAllStudents();
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     const handleAttendance = (data: any) => {
@@ -120,26 +155,143 @@ export function AllDetectionsCard() {
     }
   };
 
-  return (
-    <Card className="relative overflow-hidden bg-black/90 backdrop-blur-sm border border-gray-700 shadow-2xl">
+  // Check if a student is detected (present)
+  const isStudentDetected = (studentId: string): boolean => {
+    return detections.some(
+      (det) => det.studentId === studentId || det.id === studentId
+    );
+  };
+
+  const card = (
+    <Card
+      className={cn(
+        "relative overflow-hidden bg-black/90 backdrop-blur-sm border border-gray-700 shadow-2xl",
+        isExpanded && "max-w-6xl mx-auto"
+      )}
+    >
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-bold text-white">
+          <CardTitle className="text-lg font-bold text-white ">
             All Detections ({detections.length})
           </CardTitle>
-          {detections.length > 0 && (
-            <button
-              onClick={clearAllDetections}
-              className="text-xs text-red-400 hover:text-red-300 underline flex items-center gap-1 transition-colors"
+          <div className="flex items-center gap-2">
+            {detections.length > 0 && (
+              <button
+                onClick={clearAllDetections}
+                className="text-xs text-red-400 hover:text-red-300 underline flex items-center gap-1 transition-colors mr-2"
+              >
+                <Trash2 className="h-3 w-3" />
+                Clear All
+              </button>
+            )}
+            <div className="flex items-center gap-1 bg-gray-800 rounded-lg p-1 border border-gray-700">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1 rounded transition-colors ${
+                  viewMode === "list"
+                    ? "bg-gray-700 text-white"
+                    : "text-gray-400 hover:text-gray-300"
+                }`}
+                title="List View"
+              >
+                <List className="h-3 w-3" />
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1 rounded transition-colors ${
+                  viewMode === "grid"
+                    ? "bg-gray-700 text-white"
+                    : "text-gray-400 hover:text-gray-300"
+                }`}
+                title="Grid View"
+              >
+                <Grid3x3 className="h-3 w-3" />
+              </button>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={isExpanded ? "Collapse" : "Expand"}
+              onClick={() => setIsExpanded((v) => !v)}
             >
-              <Trash2 className="h-3 w-3" />
-              Clear All
-            </button>
-          )}
+              {isExpanded ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {detections.length === 0 ? (
+        {viewMode === "grid" ? (
+          // Grid View
+          loadingStudents ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-400">Loading students...</p>
+            </div>
+          ) : students.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+                <User className="h-8 w-8 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-400">No students found</p>
+            </div>
+          ) : (
+            <div className="max-h-[600px] overflow-y-auto">
+              <div
+                className={cn(
+                  "grid gap-3 p-1",
+                  isExpanded ? "grid-cols-4" : "grid-cols-3"
+                )}
+              >
+                {students.map((student) => {
+                  const isDetected = isStudentDetected(student.studentId);
+                  return (
+                    <div
+                      key={student._id}
+                      className={`relative rounded-lg overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 border-2 transition-all ${
+                        isDetected
+                          ? "border-green-500 shadow-lg shadow-green-500/20"
+                          : "border-gray-700"
+                      }`}
+                    >
+                      {/* Student Image */}
+                      <div className="aspect-square relative">
+                        {student.photos?.[0] ? (
+                          <Image
+                            src={getPicUrl(student.photos[0])}
+                            alt={`${student.firstName} ${student.lastName}`}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <User className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+                        {/* Checkmark overlay for detected students */}
+                        {isDetected && (
+                          <div className="absolute top-1 right-1 bg-green-500 rounded-full p-1 shadow-lg">
+                            <Check className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </div>
+                      {/* Student Info */}
+                      <div className="p-2 bg-gray-900/90">
+                        <p className="text-xs font-semibold text-white truncate">
+                          {student.firstName} {student.lastName}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )
+        ) : detections.length === 0 ? (
+          // List View - Empty State
           <div className="text-center py-8">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-800 flex items-center justify-center">
               <User className="h-8 w-8 text-gray-400" />
@@ -147,6 +299,7 @@ export function AllDetectionsCard() {
             <p className="text-sm text-gray-400">No detections yet</p>
           </div>
         ) : (
+          // List View - Detections
           <div className="space-y-3 max-h-[600px] overflow-y-auto">
             {detections.map((detection, index) => (
               <div
@@ -183,7 +336,7 @@ export function AllDetectionsCard() {
                         <h3 className="text-base font-semibold text-white truncate">
                           {detection.name}
                         </h3>
-                        <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-gray-400">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-400">
                           {detection.rollNumber && (
                             <span>Roll: {detection.rollNumber}</span>
                           )}
@@ -197,6 +350,13 @@ export function AllDetectionsCard() {
                           )}
                           {detection.division && (
                             <span>Div: {detection.division}</span>
+                          )}
+                          {detection.time && (
+                            <span>
+                              Time:{" "}
+                              {new Date(detection.time).toLocaleDateString()}{" "}
+                              {new Date(detection.time).toLocaleTimeString()}
+                            </span>
                           )}
                         </div>
                       </>
@@ -219,4 +379,13 @@ export function AllDetectionsCard() {
       </CardContent>
     </Card>
   );
+
+  return isExpanded ? (
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-auto p-6">
+      {card}
+    </div>
+  ) : (
+    card
+  );
 }
+

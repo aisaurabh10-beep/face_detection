@@ -21,9 +21,7 @@ export default function DashboardPage() {
           </Suspense>
         </div>
 
-        <div className="space-y-6">
-          <AllDetectionsCard/>
-        </div>
+        <div className="space-y-6"><AllDetectionsCard /></div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -33,3 +31,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

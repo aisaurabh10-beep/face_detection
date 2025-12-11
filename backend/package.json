@@ -1,15 +1,16 @@
+
 {
   "name": "attendance-backend-poc",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "build": "pkg index.js --targets node18-linux-x64,node18-linux-arm64,node18-win-x64,node18-macos-x64,node18-macos-arm64 --out-path dist"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",

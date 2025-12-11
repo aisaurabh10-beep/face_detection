@@ -1,6 +1,6 @@
+
 const Student = require("../models/Student");
 const { studentUpload } = require("../middleware/upload");
-const axios = require("axios");
 
 // Get all students
 const getAllStudents = async (req, res) => {
@@ -83,7 +83,7 @@ const getStudentById = async (req, res) => {
 // Register new student
 const registerStudent = async (req, res) => {
   try {
-    studentUpload.array("photos", 10)(req, res, async (err) => {
+    studentUpload.array("photos", 6)(req, res, async (err) => {
       if (err) {
         return res.status(400).json({
           error: true,
@@ -140,39 +140,26 @@ const registerStudent = async (req, res) => {
       const student = new Student(studentData);
       await student.save();
 
-      // req.io.emit("student_registered", {
-      //   student: student,
-      //   message: "New student registered",
-      // });
-
-
-      // return res.status(201).json({
-      //   success: true,
-      //   message: "Student registered successfully",
-      //   data: student,
-      // });
-
       try {
-        const response = await axios.post(
-          // "http://127.0.0.1:8000/sync-embeddings"
-              `http://127.0.0.1:8000/register/${studentId}`,
-          {
-            student_id: studentId,
-          }
-        );
+        const response = await fetch("http://127.0.0.1:8000/sync-embeddings", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-        console.log("Sync API response:", response.data);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
+        const data = await response.json();
 
-
-        if (response.data && response.data.status === "success") {
+        if (data && data.success === "True") {
           // ✅ Proceed only if response success = True
-
           req.io.emit("student_registered", {
             student: student,
             message: "New student registered",
           });
-
 
           return res.status(201).json({
             success: true,
@@ -180,20 +167,17 @@ const registerStudent = async (req, res) => {
             data: student,
           });
         } else {
-          console.error("Embedding sync failed:", response.data);
-          await Student.findByIdAndDelete(student._id);
+          console.error("Embedding sync failed:", data);
           return res.status(500).json({
             error: true,
-            message: "Embedding sync failed",
+            message: "Student saved but embedding sync failed",
           });
         }
       } catch (syncError) {
-        console.log("Error calling sync API:", syncError.message);
-        await Student.findByIdAndDelete(student._id);
-
+        console.error("Error calling sync API:", syncError.message);
         return res.status(500).json({
           error: true,
-          message: "Failed to call sync API",
+          message: "Student saved but failed to call sync API",
         });
       }
     });
@@ -290,14 +274,16 @@ const toggleStudentStatus = async (req, res) => {
     // Emit real-time update
     req.io.emit("student_updated", {
       student: student,
-      message: `Student ${newStatus ? "activated" : "deactivated"
-        } successfully`,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
     });
 
     res.json({
       success: true,
-      message: `Student ${newStatus ? "activated" : "deactivated"
-        } successfully`,
+      message: `Student ${
+        newStatus ? "activated" : "deactivated"
+      } successfully`,
       data: student,
     });
   } catch (error) {

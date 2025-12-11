@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useSocket } from "@/lib/socket";
 import config from "@/config/config";
 import { LastDetectionCard } from "@/components/dashboard/last-detection-card";
+import { StreamConnectingAnimation } from "./StreamConnectingAnimation";
 import {
   Camera,
   CameraOff,
@@ -43,6 +44,7 @@ export function StreamPlayer({
 }: StreamPlayerProps) {
   const { on, off } = useSocket();
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [source, setSource] = useState<StreamSource>(config.defaultStream);
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -148,6 +150,7 @@ export function StreamPlayer({
 
   const start = useCallback(async () => {
     setIsStreaming(true);
+    setIsConnecting(true);
     setStreamError("");
 
     if (source === "device" && videoRef.current) {
@@ -158,9 +161,11 @@ export function StreamPlayer({
         });
         videoRef.current.srcObject = stream as any;
         await videoRef.current.play();
+        setIsConnecting(false);
       } catch (e) {
         console.error(e);
         setIsStreaming(false);
+        setIsConnecting(false);
         setStreamError("Failed to access device camera");
       }
     } else if (source === "actual" && selectedCameraId && videoRef.current) {
@@ -170,14 +175,35 @@ export function StreamPlayer({
         RTSPtoWebClient.setupStream(
           selectedCameraId,
           videoRef.current,
-          () => {
+          async () => {
+            console.log("videoRef.current", videoRef.current);
             console.log("WebRTC stream started successfully!");
+
+            // Ensure video plays
+            if (videoRef.current) {
+              try {
+                await videoRef.current.play();
+                console.log("Video playback started");
+                setIsConnecting(false);
+              } catch (playError) {
+                console.error("Error playing video:", playError);
+                // Video might need user interaction, but continue anyway
+                // Check if video is actually playing after a delay
+                setTimeout(() => {
+                  if (videoRef.current && videoRef.current.readyState >= 2) {
+                    setIsConnecting(false);
+                  }
+                }, 1000);
+              }
+            }
+
             setIsStreaming(true);
           },
           (error) => {
             console.error("WebRTC stream setup error:", error);
             setStreamError(`WebRTC stream error: ${error.message}`);
             setIsStreaming(false);
+            setIsConnecting(false);
             streamInitializedRef.current = false;
           }
         );
@@ -198,7 +224,7 @@ export function StreamPlayer({
     try {
       // Test data for attendance marking
       const testData = {
-        studentId: "6923fa9a73c44f65d8cbbf46", // Example ObjectId - you may need to replace with actual student ID
+        studentId: "68e57a3282accb11ff5d1a25", // Example ObjectId - you may need to replace with actual student ID
         cameraId: "camera1",
         confidence: 0.95,
       };
@@ -223,6 +249,7 @@ export function StreamPlayer({
 
   const stop = useCallback(() => {
     setIsStreaming(false);
+    setIsConnecting(false);
     streamInitializedRef.current = false;
     setStreamError("");
 
@@ -237,6 +264,36 @@ export function StreamPlayer({
       } catch {}
     }
   }, []);
+
+  // Monitor video element to detect when stream is actually playing
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isConnecting) return;
+
+    const handlePlaying = () => {
+      console.log("Video is playing, hiding connecting animation");
+      setIsConnecting(false);
+    };
+
+    const handleLoadedData = () => {
+      if (video.readyState >= 2 && !video.paused) {
+        setIsConnecting(false);
+      }
+    };
+
+    video.addEventListener("playing", handlePlaying);
+    video.addEventListener("loadeddata", handleLoadedData);
+
+    // Check if already playing
+    if (video.readyState >= 2 && !video.paused) {
+      setIsConnecting(false);
+    }
+
+    return () => {
+      video.removeEventListener("playing", handlePlaying);
+      video.removeEventListener("loadeddata", handleLoadedData);
+    };
+  }, [isConnecting]);
 
   // switch source should stop any ongoing device stream
   useEffect(() => {
@@ -361,6 +418,9 @@ export function StreamPlayer({
             isExpanded ? "h-[calc(100dvh-88px)]" : "aspect-video"
           )}
         >
+          {/* Connecting Animation */}
+          {isConnecting && <StreamConnectingAnimation />}
+
           {/* Stream error display */}
           {streamError && (
             <div className="absolute top-3 left-3 right-3 z-10">
@@ -434,3 +494,4 @@ export function StreamPlayer({
 }
 
 export default StreamPlayer;
+

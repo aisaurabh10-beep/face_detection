@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-import { Menu, X, Activity } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { defaultQuickStats, navigation } from "@/lib/helper";
 import { QuickStatItem } from "@/lib/types";
+import Lottie from "lottie-react";
 
 // navigation and defaultQuickStats moved to @/lib/helper
 // types moved to @/lib/types
@@ -24,6 +25,15 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [quickStats, setQuickStats] =
     useState<QuickStatItem[]>(defaultQuickStats);
+  const [cctvAnimation, setCctvAnimation] = useState<any>(null);
+
+  // Load Lottie animation
+  useEffect(() => {
+    fetch("/CCTV Camera.json")
+      .then((res) => res.json())
+      .then((data) => setCctvAnimation(data))
+      .catch((err) => console.error("Failed to load Lottie animation:", err));
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -86,17 +96,27 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="flex items-center justify-between p-4 ">
         {!isCollapsed && (
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Activity className="w-5 h-5 text-primary-foreground" />
+            <div className="w-11 h-11 rounded-lg flex items-center justify-center overflow-hidden">
+              {cctvAnimation ? (
+                <Lottie
+                  animationData={cctvAnimation}
+                  loop={true}
+                  autoplay={true}
+                  className="w-full h-full"
+                />
+              ) : (
+                <div className="w-5 h-5 bg-primary-foreground/20 rounded animate-pulse" />
+              )}
             </div>
             <div>
-              <h1 className="text-lg font-semibold">Bishop&apos;s School</h1>
+              <h1 className="text-lg font-semibold">BharathaTechno</h1>
               <p className="text-xs text-muted-foreground">
                 AI Attendance System
               </p>
             </div>
           </div>
         )}
+
         <Button
           variant="ghost"
           size="icon"
@@ -187,3 +207,4 @@ export function Sidebar({ className }: SidebarProps) {
     </div>
   );
 }
+
