@@ -1,8 +1,8 @@
 const Attendance = require("../models/Attendance");
 const Student = require("../models/Student");
 const UnknownFace = require("../models/UnknownFace");
+const config = require("../config/config");
 
-// Mark attendance
 const markAttendance = async (req, res) => {
   try {
     const { cameraId, confidence, deepface_distance } = req.body;
@@ -10,23 +10,23 @@ const markAttendance = async (req, res) => {
 
     console.log("Marking attendance for studentId:", studentId);
 
-    // Find the student by studentId or _id
-    // const student = await Student.findOne({ studentId });
     const student = await Student.findOne({
       $or: [{ studentId: studentId }, { _id: studentId }],
     });
 
     if (!student) {
-      return res.status(404).json({
+      return res.status(config.HTTP_STATUS.NOT_FOUND).json({
+        success: false,
         error: true,
-        message: "Student not found",
+        message: config.MESSAGES.ERROR.STUDENT_NOT_FOUND,
       });
     }
 
-    // Get today's date (start and end of day)
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     // Check if attendance already exists for today
     let attendance = await Attendance.findOne({
@@ -35,44 +35,42 @@ const markAttendance = async (req, res) => {
     });
 
     const now = new Date();
+    const logEntry = {
+      timestamp: now,
+      cameraId: cameraId || attendance?.cameraId || "camera1",
+      confidence: confidence ?? attendance?.confidence ?? 0,
+      deepface_distance: deepface_distance ?? undefined,
+    };
 
     if (attendance) {
-      // Update existing attendance
-      if (!attendance.exitTime) {
-        attendance.exitTime = now;
-        attendance.status = "present";
-      }
-      attendance.confidence = confidence;
+      // Update existing attendance: update exit time and append detection log
+      attendance.exitTime = now;
+      attendance.status = "present";
+      attendance.confidence = confidence ?? attendance.confidence;
+      attendance.deepface_distance =
+        deepface_distance ?? attendance.deepface_distance;
+      attendance.location = location || attendance.location || "";
+      attendance.logs = Array.isArray(attendance.logs) ? attendance.logs : [];
+      attendance.logs.push(logEntry);
 
       await attendance.save();
     } else {
-      // Create new attendance record
       attendance = new Attendance({
         studentId: student._id,
         date: now,
         entryTime: now,
+        exitTime: now,
         cameraId,
         confidence,
         status: "present",
-        deepface_distance: deepface_distance || "0",
+        deepface_distance: deepface_distance || 0,
+        location: location || "",
+        logs: [logEntry],
       });
 
       await attendance.save();
     }
 
-    // attendance = new Attendance({
-    //   studentId: student._id,
-    //   date: now,
-    //   entryTime: now,
-    //   cameraId,
-    //   confidence,
-    //   status: "present",
-    //   deepface_distance: deepface_distance || "0"
-    // });
-
-    await attendance.save();
-
-    // Populate student data for response
     await attendance.populate(
       "studentId",
       "firstName lastName studentId class rollNumber photos"
@@ -82,19 +80,19 @@ const markAttendance = async (req, res) => {
     req.io.emit("attendance_marked", {
       attendance,
       student: attendance.studentId,
-      message: "Attendance marked successfully",
+      message: config.MESSAGES.SUCCESS.ATTENDANCE_MARKED,
     });
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: "Attendance marked successfully",
+      message: config.MESSAGES.SUCCESS.ATTENDANCE_MARKED,
       data: attendance,
     });
   } catch (error) {
-    console.error("Error marking attendance:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error marking attendance",
+      message: config.MESSAGES.ERROR.ATTENDANCE_ERROR,
     });
   }
 };
@@ -102,11 +100,17 @@ const markAttendance = async (req, res) => {
 // Get today's attendance
 const getTodayAttendance = async (req, res) => {
   try {
-    const { page = 1, limit = 10, class: studentClass } = req.query;
+    const {
+      page = config.DEFAULT_PAGE,
+      limit = config.DEFAULT_LIMIT,
+      class: studentClass,
+    } = req.query;
 
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const filter = {
       date: { $gte: startOfDay, $lte: endOfDay },
@@ -131,7 +135,7 @@ const getTodayAttendance = async (req, res) => {
 
     const total = await Attendance.countDocuments(filter);
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: {
         attendance,
@@ -141,10 +145,10 @@ const getTodayAttendance = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching today's attendance:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching today's attendance",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -153,18 +157,21 @@ const getTodayAttendance = async (req, res) => {
 const getStudentAttendance = async (req, res) => {
   try {
     const { studentId } = req.params;
-    const { startDate, endDate, page = 1, limit = 10 } = req.query;
+    const {
+      startDate,
+      endDate,
+      page = config.DEFAULT_PAGE,
+      limit = config.DEFAULT_LIMIT,
+    } = req.query;
 
     const filter = { studentId };
 
     if (startDate && endDate) {
       const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0); // 00:00:00.000 → start of day
+      start.setHours(0, 0, 0, 0);
 
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999); // 23:59:59.999 → end of day
-
-      console.log(start, end);
+      end.setHours(23, 59, 59, 999);
 
       filter.date = {
         $gte: start,
@@ -175,15 +182,13 @@ const getStudentAttendance = async (req, res) => {
     const attendance = await Attendance.find(filter)
       .populate("studentId", "firstName lastName studentId class rollNumber")
       .sort({ date: -1 })
-      // .limit(limit * 1)
-      // .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
       .lean();
-
-    console.log("attendance", attendance, studentId)
 
     const total = await Attendance.countDocuments(filter);
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: {
         attendance,
@@ -193,10 +198,10 @@ const getStudentAttendance = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching student attendance:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching student attendance",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -205,8 +210,10 @@ const getAttendanceStats = async (req, res) => {
   try {
     const { date } = req.query;
     const targetDate = date ? new Date(date) : new Date();
-    const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const totalStudents = await Student.countDocuments({ isActive: true });
     const presentStudents = await Attendance.countDocuments({
@@ -227,15 +234,15 @@ const getAttendanceStats = async (req, res) => {
       date: targetDate,
     };
 
-    res.status(200).json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: stats,
     });
   } catch (error) {
-    console.error("Error fetching attendance stats:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching attendance stats",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -245,8 +252,10 @@ const getDailyClassWise = async (req, res) => {
   try {
     const { date } = req.query;
     const target = date ? new Date(date) : new Date();
-    const startOfDay = new Date(target.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(target.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(target);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(target);
+    endOfDay.setHours(23, 59, 59, 999);
 
     // Fetch students grouped by class
     const students = await Student.find({ isActive: true })
@@ -295,16 +304,15 @@ const getDailyClassWise = async (req, res) => {
       });
     }
 
-    // Unknown faces for the day
     const unknownFaces = await UnknownFace.countDocuments({
       timestamp: { $gte: startOfDay, $lte: endOfDay },
     });
 
     const avgPresentPercentage = classes.length
       ? classes.reduce(
-        (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
-        0
-      ) / classes.length
+          (sum, c) => sum + (c.total > 0 ? (c.present / c.total) * 100 : 0),
+          0
+        ) / classes.length
       : 0;
 
     const summary = {
@@ -321,14 +329,16 @@ const getDailyClassWise = async (req, res) => {
         totalStudents > 0 ? (totalPresent / totalStudents) * 100 : 0,
     };
 
-    res
-      .status(200)
-      .json({ success: true, data: { date: startOfDay, classes, summary } });
+    res.status(config.HTTP_STATUS.OK).json({
+      success: true,
+      data: { date: startOfDay, classes, summary },
+    });
   } catch (error) {
-    console.error("Error fetching daily class-wise stats:", error);
-    res
-      .status(500)
-      .json({ error: true, message: "Error fetching daily class-wise stats" });
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      error: true,
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
+    });
   }
 };
 
@@ -336,8 +346,8 @@ const getDailyClassWise = async (req, res) => {
 const getAttendanceReport = async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 10,
+      page = config.DEFAULT_PAGE,
+      limit = config.DEFAULT_LIMIT,
       class: studentClass,
       division,
       rollNumber,
@@ -346,7 +356,6 @@ const getAttendanceReport = async (req, res) => {
       endDate,
     } = req.query;
 
-    // Build student filter
     const studentFilter = { isActive: true };
     if (studentClass) studentFilter.class = studentClass;
     if (division) studentFilter.division = division;
@@ -358,13 +367,12 @@ const getAttendanceReport = async (req, res) => {
       ];
     }
 
-    // Get all students matching the filter
     const students = await Student.find(studentFilter)
       .select("_id firstName lastName class division rollNumber photos")
       .lean();
 
     if (students.length === 0) {
-      return res.json({
+      return res.status(config.HTTP_STATUS.OK).json({
         success: true,
         data: {
           reports: [],
@@ -377,7 +385,6 @@ const getAttendanceReport = async (req, res) => {
 
     const studentIds = students.map((s) => s._id);
 
-    // Build attendance date filter
     let attendanceDateFilter = {};
     if (startDate && endDate) {
       const start = new Date(startDate);
@@ -462,7 +469,6 @@ const getAttendanceReport = async (req, res) => {
       };
     });
 
-    // Combine student data with attendance data
     const reports = students.map((student) => {
       const attendance = attendanceMap[student._id.toString()] || {
         totalDays: totalWorkingDays,
@@ -478,13 +484,12 @@ const getAttendanceReport = async (req, res) => {
       };
     });
 
-    // Apply pagination
     const total = reports.length;
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + parseInt(limit);
     const paginatedReports = reports.slice(startIndex, endIndex);
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: {
         reports: paginatedReports,
@@ -494,10 +499,10 @@ const getAttendanceReport = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching attendance report:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching attendance report",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };

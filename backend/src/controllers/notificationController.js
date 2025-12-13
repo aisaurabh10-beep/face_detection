@@ -1,26 +1,29 @@
 const UnknownFace = require("../models/UnknownFace");
+const config = require("../config/config");
 
 // Get unread notification count (unknown faces)
 const getUnreadCount = async (req, res) => {
   try {
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const unreadCount = await UnknownFace.countDocuments({
       timestamp: { $gte: startOfDay, $lte: endOfDay },
       processed: false,
     });
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: { unreadCount },
     });
   } catch (error) {
-    console.error("Error fetching unread count:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching unread count",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -28,11 +31,14 @@ const getUnreadCount = async (req, res) => {
 // Get recent notifications (unknown faces)
 const getNotifications = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = config.DEFAULT_PAGE, limit = config.DEFAULT_LIMIT } =
+      req.query;
 
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const notifications = await UnknownFace.find({
       timestamp: { $gte: startOfDay, $lte: endOfDay },
@@ -46,7 +52,7 @@ const getNotifications = async (req, res) => {
       timestamp: { $gte: startOfDay, $lte: endOfDay },
     });
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: {
         notifications,
@@ -56,10 +62,10 @@ const getNotifications = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching notifications:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching notifications",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -70,9 +76,10 @@ const markAsRead = async (req, res) => {
     const { ids } = req.body;
 
     if (!ids || !Array.isArray(ids)) {
-      return res.status(400).json({
+      return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
         error: true,
-        message: "Invalid IDs provided",
+        message: config.MESSAGES.ERROR.INVALID_IDS,
       });
     }
 
@@ -81,16 +88,16 @@ const markAsRead = async (req, res) => {
       { processed: true }
     );
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: `${result.modifiedCount} notifications marked as read`,
+      message: config.MESSAGES.SUCCESS.NOTIFICATIONS_MARKED_READ,
       data: { modifiedCount: result.modifiedCount },
     });
   } catch (error) {
-    console.error("Error marking notifications as read:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error marking notifications as read",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
@@ -99,8 +106,10 @@ const markAsRead = async (req, res) => {
 const markAllAsRead = async (req, res) => {
   try {
     const today = new Date();
-    const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(today.setHours(23, 59, 59, 999));
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
 
     const result = await UnknownFace.updateMany(
       {
@@ -110,16 +119,16 @@ const markAllAsRead = async (req, res) => {
       { processed: true }
     );
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: `${result.modifiedCount} notifications marked as read`,
+      message: config.MESSAGES.SUCCESS.NOTIFICATIONS_MARKED_READ,
       data: { modifiedCount: result.modifiedCount },
     });
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error marking all notifications as read",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };

@@ -5,7 +5,7 @@ const http = require("http");
 const socketIo = require("socket.io");
 const config = require("./src/config/config");
 const { validateLicense } = require("./license");
-// require("dotenv").config();
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
@@ -16,15 +16,19 @@ const io = socketIo(server, {
   },
 });
 
-// Validate license asynchronously
-(async () => {
+async function startServer() {
   try {
-    await validateLicense();
+    await validateLicense(); // Block startup until license is validated
+    await connectDB();
+    server.listen(config.PORT, () => {
+      console.log(`🚀 Backend POC running on port ${config.PORT}`);
+      console.log(`📊 Health check: http://localhost:${config.PORT}/api/health`);
+    });
   } catch (error) {
-    console.error("License validation failed:", error);
+    console.error("❌ Startup failed:", error.message || error);
     process.exit(1);
   }
-})();
+}
 
 app.use(
   cors({
@@ -35,7 +39,10 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, config.UPLOAD_BASE_DIR))
+);
 
 // Make io accessible to routes
 app.use((req, res, next) => {
@@ -56,16 +63,15 @@ app.use("/api/unknown-faces", unknownFaceRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    message: "Attendance Backend POC is running",
-    timestamp: new Date().toISOString(),
+  res.status(config.HTTP_STATUS.OK).json({
+    success: true,
+    message: "Server is running",
   });
 });
 
 // Socket.IO connection handling
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+  console.log(" 🔌 Client connected: ", socket.id);
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
@@ -73,26 +79,31 @@ io.on("connection", (socket) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error("Error:", err);
-  res.status(err.status || 500).json({
+  if (config.NODE_ENV === "development") {
+    console.error("Error:", err);
+  }
+
+  const statusCode = err.status || config.HTTP_STATUS.INTERNAL_SERVER_ERROR;
+  const message = err.message || config.MESSAGES.ERROR.INTERNAL_SERVER;
+
+  res.status(statusCode).json({
+    success: false,
     error: true,
-    message: err.message || "Internal Server Error",
+    message:
+      config.NODE_ENV === "production" && statusCode === 500
+        ? config.MESSAGES.ERROR.INTERNAL_SERVER
+        : message,
+    ...(config.NODE_ENV === "development" && { stack: err.stack }),
   });
 });
 
 // 404 handler
 app.use("*", (req, res) => {
-  res.status(404).json({
+  res.status(config.HTTP_STATUS.NOT_FOUND).json({
+    success: false,
     error: true,
-    message: "Route not found",
+    message: config.MESSAGES.ERROR.NOT_FOUND,
   });
 });
 
-const PORT = process.env.PORT || 5000;
-
-server.listen(PORT, () => {
-  console.log(`🚀 Backend POC running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-  connectDB();
-});
-
+startServer();

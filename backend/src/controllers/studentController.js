@@ -1,13 +1,12 @@
-
 const Student = require("../models/Student");
 const { studentUpload } = require("../middleware/upload");
+const config = require("../config/config");
 
-// Get all students
 const getAllStudents = async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 10,
+      page = config.DEFAULT_PAGE,
+      limit = config.DEFAULT_LIMIT,
       class: studentClass,
       division,
       rollNumber,
@@ -35,7 +34,7 @@ const getAllStudents = async (req, res) => {
       Student.countDocuments(filter),
     ]);
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: {
         students,
@@ -45,15 +44,14 @@ const getAllStudents = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error fetching students:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching students",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
 
-// Get student by ID
 const getStudentById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -61,136 +59,163 @@ const getStudentById = async (req, res) => {
     const student = await Student.findById(id);
 
     if (!student) {
-      return res.status(404).json({
+      return res.status(config.HTTP_STATUS.NOT_FOUND).json({
+        success: false,
         error: true,
-        message: "Student not found",
+        message: config.MESSAGES.ERROR.STUDENT_NOT_FOUND,
       });
     }
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
       data: student,
     });
   } catch (error) {
-    console.error("Error fetching student:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error fetching student",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
 
-// Register new student
 const registerStudent = async (req, res) => {
   try {
-    studentUpload.array("photos", 6)(req, res, async (err) => {
-      if (err) {
-        return res.status(400).json({
-          error: true,
-          message: err.message,
-        });
-      }
-
-      const {
-        studentId,
-        firstName,
-        lastName,
-        email,
-        phone,
-        class: studentClass,
-        division,
-        rollNumber,
-      } = req.body;
-
-      // Check if student already exists
-      const existingStudent = await Student.findOne({
-        $or: [{ email }, { rollNumber }],
-      });
-
-      if (existingStudent) {
-        return res.status(400).json({
-          error: true,
-          message: "Student with this email or roll number already exists",
-        });
-      }
-
-      const files = Array.isArray(req.files) ? req.files : [];
-      if (!files.length) {
-        return res.status(400).json({
-          error: true,
-          message: "At least one photo is required",
-        });
-      }
-      const photos = files.map((f) => f.path);
-      const photoDir = files[0]?.destination || "";
-
-      const studentData = {
-        studentId,
-        firstName,
-        lastName,
-        email,
-        phone,
-        class: studentClass,
-        division,
-        rollNumber,
-        photos,
-        photoDir,
-      };
-
-      const student = new Student(studentData);
-      await student.save();
-
-      try {
-        const response = await fetch("http://127.0.0.1:8000/sync-embeddings", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data && data.success === "True") {
-          // ✅ Proceed only if response success = True
-          req.io.emit("student_registered", {
-            student: student,
-            message: "New student registered",
-          });
-
-          return res.status(201).json({
-            success: true,
-            message: "Student registered and embeddings synced successfully",
-            data: student,
-          });
-        } else {
-          console.error("Embedding sync failed:", data);
-          return res.status(500).json({
+    studentUpload.array("photos", config.MAX_STUDENT_PHOTOS)(
+      req,
+      res,
+      async (err) => {
+        if (err) {
+          return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
             error: true,
-            message: "Student saved but embedding sync failed",
+            message: err.message || config.MESSAGES.ERROR.FILE_UPLOAD_ERROR,
           });
         }
-      } catch (syncError) {
-        console.error("Error calling sync API:", syncError.message);
-        return res.status(500).json({
-          error: true,
-          message: "Student saved but failed to call sync API",
+
+        const {
+          studentId,
+          firstName,
+          lastName,
+          email,
+          phone,
+          class: studentClass,
+          division,
+          rollNumber,
+        } = req.body;
+
+        const currentCount = await Student.countDocuments();
+        if (currentCount >= Number(config.STUDENT_LIMIT)) {
+          return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            error: true,
+            message: config.MESSAGES.ERROR.STUDENT_LIMIT_REACHED,
+          });
+        }
+
+        // Check if student already exists
+        const existingStudent = await Student.findOne({
+          $or: [
+            { email },
+            { studentId },
+            { rollNumber, class: studentClass, division },
+          ],
         });
+
+        if (existingStudent) {
+          return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            error: true,
+            message: config.MESSAGES.ERROR.STUDENT_EXISTS,
+          });
+        }
+
+        const files = Array.isArray(req.files) ? req.files : [];
+        if (!files.length) {
+          return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+            success: false,
+            error: true,
+            message: config.MESSAGES.ERROR.PHOTOS_REQUIRED,
+          });
+        }
+        const photos = files.map((f) => f.path);
+        const photoDir = files[0]?.destination || "";
+
+        const studentData = {
+          studentId,
+          firstName,
+          lastName,
+          email,
+          phone,
+          class: studentClass,
+          division,
+          rollNumber,
+          photos,
+          photoDir,
+        };
+
+        const student = new Student(studentData);
+        await student.save();
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(
+            () => controller.abort(),
+            config.EMBEDDING_SYNC_TIMEOUT
+          );
+
+          const response = await fetch(config.SYNC_SUCCESS_STATUS, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          if (data && data.success === config.SYNC_SUCCESS_STATUS) {
+            req.io.emit("student_registered", {
+              student: student,
+              message: config.MESSAGES.SUCCESS.STUDENT_REGISTERED,
+            });
+
+            return res.status(config.HTTP_STATUS.CREATED).json({
+              success: true,
+              message: config.MESSAGES.SUCCESS.EMBEDDING_SYNCED,
+              data: student,
+            });
+          } else {
+            return res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+              success: false,
+              error: true,
+              message: config.MESSAGES.ERROR.EMBEDDING_SYNC_FAILED,
+            });
+          }
+        } catch (syncError) {
+          return res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            error: true,
+            message: config.MESSAGES.ERROR.EMBEDDING_API_ERROR,
+          });
+        }
       }
-    });
+    );
   } catch (error) {
-    console.error("Error registering student:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error registering student",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
 
-// Update student
 const updateStudent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -202,27 +227,27 @@ const updateStudent = async (req, res) => {
     });
 
     if (!student) {
-      return res.status(404).json({
+      return res.status(config.HTTP_STATUS.NOT_FOUND).json({
+        success: false,
         error: true,
-        message: "Student not found",
+        message: config.MESSAGES.ERROR.STUDENT_NOT_FOUND,
       });
     }
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: "Student updated successfully",
+      message: config.MESSAGES.SUCCESS.STUDENT_UPDATED,
       data: student,
     });
   } catch (error) {
-    console.error("Error updating student:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error updating student",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
 
-// Delete student
 const deleteStudent = async (req, res) => {
   try {
     const { id } = req.params;
@@ -230,40 +255,39 @@ const deleteStudent = async (req, res) => {
     const student = await Student.findByIdAndDelete(id);
 
     if (!student) {
-      return res.status(404).json({
+      return res.status(config.HTTP_STATUS.NOT_FOUND).json({
+        success: false,
         error: true,
-        message: "Student not found",
+        message: config.MESSAGES.ERROR.STUDENT_NOT_FOUND,
       });
     }
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: "Student deleted successfully",
+      message: config.MESSAGES.SUCCESS.STUDENT_DELETED,
     });
   } catch (error) {
-    console.error("Error deleting student:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error deleting student",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };
 
-// Toggle student active status
 const toggleStudentStatus = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // First get the current student to check current status
     const currentStudent = await Student.findById(id);
     if (!currentStudent) {
-      return res.status(404).json({
+      return res.status(config.HTTP_STATUS.NOT_FOUND).json({
+        success: false,
         error: true,
-        message: "Student not found",
+        message: config.MESSAGES.ERROR.STUDENT_NOT_FOUND,
       });
     }
 
-    // Toggle the isActive status
     const newStatus = !currentStudent.isActive;
     const student = await Student.findByIdAndUpdate(
       id,
@@ -271,26 +295,21 @@ const toggleStudentStatus = async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    // Emit real-time update
     req.io.emit("student_updated", {
       student: student,
-      message: `Student ${
-        newStatus ? "activated" : "deactivated"
-      } successfully`,
+      message: config.MESSAGES.SUCCESS.STUDENT_STATUS_TOGGLED,
     });
 
-    res.json({
+    res.status(config.HTTP_STATUS.OK).json({
       success: true,
-      message: `Student ${
-        newStatus ? "activated" : "deactivated"
-      } successfully`,
+      message: config.MESSAGES.SUCCESS.STUDENT_STATUS_TOGGLED,
       data: student,
     });
   } catch (error) {
-    console.error("Error toggling student status:", error);
-    res.status(500).json({
+    res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
       error: true,
-      message: "Error updating student status",
+      message: config.MESSAGES.ERROR.INTERNAL_SERVER,
     });
   }
 };

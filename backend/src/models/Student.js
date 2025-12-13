@@ -6,6 +6,7 @@ const StudentSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      unique: true,
     },
     firstName: {
       type: String,
@@ -57,9 +58,6 @@ const StudentSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
-    // embedding: {
-    //   type: [Number],
-    // },
     isActive: {
       type: Boolean,
       default: true,
@@ -72,9 +70,10 @@ const StudentSchema = new mongoose.Schema(
 );
 
 // Index for better query performance
-StudentSchema.index({ studentId: 1 });
 StudentSchema.index({ email: 1 });
 StudentSchema.index({ isActive: 1 });
+
+StudentSchema.index({ rollNumber: 1, class: 1, division: 1 }, { unique: true });
 
 // Virtual for full name
 StudentSchema.virtual("fullName").get(function () {

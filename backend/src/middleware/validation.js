@@ -1,4 +1,5 @@
 // Validation middleware for request data
+const config = require("../config/config");
 
 const validateStudent = (req, res, next) => {
   const {
@@ -12,19 +13,19 @@ const validateStudent = (req, res, next) => {
   } = req.body;
   const errors = [];
 
-  if (!firstName || firstName.trim().length < 2) {
-    errors.push("First name is required and must be at least 2 characters");
+  if (!firstName || firstName.trim().length < config.MIN_NAME_LENGTH) {
+    errors.push("First name is required and must be at least " + config.MIN_NAME_LENGTH + " characters");
   }
 
-  if (!lastName || lastName.trim().length < 2) {
-    errors.push("Last name is required and must be at least 2 characters");
+  if (!lastName || lastName.trim().length < config.MIN_NAME_LENGTH) {
+    errors.push("Last name is required and must be at least " + config.MIN_NAME_LENGTH + " characters");
   }
 
   if (!email || !isValidEmail(email)) {
     errors.push("Valid email is required");
   }
 
-  if (!phone || phone.trim().length < 10) {
+  if (!phone || phone.trim().length < config.MIN_PHONE_LENGTH) {
     errors.push("Valid phone number is required");
   }
 
@@ -41,9 +42,10 @@ const validateStudent = (req, res, next) => {
   }
 
   if (errors.length > 0) {
-    return res.status(400).json({
+    return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
       error: true,
-      message: "Validation failed",
+      message: config.MESSAGES.ERROR.VALIDATION_FAILED,
       details: errors,
     });
   }
@@ -64,14 +66,18 @@ const validateAttendance = (req, res, next) => {
     errors.push("Camera ID is required");
   }
 
-  if (confidence !== undefined && (confidence < 0 || confidence > 1)) {
+  if (
+    confidence !== undefined &&
+    (confidence < config.MIN_CONFIDENCE || confidence > config.MAX_CONFIDENCE)
+  ) {
     errors.push("Confidence must be between 0 and 1");
   }
 
   if (errors.length > 0) {
-    return res.status(400).json({
+    return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
       error: true,
-      message: "Validation failed",
+      message: config.MESSAGES.ERROR.VALIDATION_FAILED,
       details: errors,
     });
   }
@@ -88,14 +94,18 @@ const validateUnknownFace = (req, res, next) => {
     errors.push("Camera ID is required");
   }
 
-  if (confidence !== undefined && (confidence < 0 || confidence > 1)) {
+  if (
+    confidence !== undefined &&
+    (confidence < config.MIN_CONFIDENCE || confidence > config.MAX_CONFIDENCE)
+  ) {
     errors.push("Confidence must be between 0 and 1");
   }
 
   if (errors.length > 0) {
-    return res.status(400).json({
+    return res.status(config.HTTP_STATUS.BAD_REQUEST).json({
+      success: false,
       error: true,
-      message: "Validation failed",
+      message: config.MESSAGES.ERROR.VALIDATION_FAILED,
       details: errors,
     });
   }
