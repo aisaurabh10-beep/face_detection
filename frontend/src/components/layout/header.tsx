@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { formatDate, formatTime } from "@/lib/utils";
 import { getPageName } from "@/lib/helper";
 import { useSocket } from "@/lib/socket";
+import { formatTime } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 // import { NotificationDropdown } from "@/components/ui/notification-dropdown";
-import { Menu, Search, Wifi, WifiOff, Activity, Clock } from "lucide-react";
+import { Activity, Clock, Menu, Search, Wifi, WifiOff } from "lucide-react";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -43,9 +43,9 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           <div className="hidden md:block">
             <h1 className="text-2xl font-bold">{pageName}</h1>
-            <p className="text-sm text-muted-foreground">
+            {/* <p className="text-sm text-muted-foreground">
               {formatDate(currentTime)}
-            </p>
+            </p> */}
           </div>
         </div>
 
@@ -89,7 +89,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           <div className="hidden sm:flex items-center space-x-1 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-mono">{formatTime(currentTime)}</span>
+            <span className="font-mono"> {new Date(currentTime).toLocaleDateString()} - {formatTime(currentTime)}</span>
           </div>
 
           {/* Notifications */}

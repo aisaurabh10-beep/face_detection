@@ -12,7 +12,8 @@
     "start:web": "next start -p 3015",
     "electron:dev": "electron .",
     "build:win": "npm run build:web && electron-builder --win",
-    "build:mac": "npm run build:web && electron-builder --mac"
+    "build:mac": "npm run build:web && electron-builder --mac",
+    "build:linux": "npm run build:web && electron-builder --linux"
   },
   "build": {
     "appId": "com.attendance.client",
@@ -26,11 +27,20 @@
     ],
     "mac": {
       "target": "dmg",
-      "icon": "public/logo.svg"
+      "icon": "public/icon.icns",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "entitlements": null,
+      "entitlementsInherit": null,
+      "identity": null
     },
     "win": {
       "target": "nsis",
-      "icon": "public/logo.svg"
+      "icon": "public/favicon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icon.png"
     },
     "directories": {
       "output": "dist"

@@ -145,17 +145,23 @@ export function Sidebar({ className }: SidebarProps) {
             </Link>
           </div>
         )}
+      </div>
 
+      <div className="px-3 pb-1 flex justify-center">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="h-8 w-8"
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          className="h-8 w-auto px-0 hover:bg-transparent hover:text-inherit"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
             <Menu className="h-4 w-4" />
           ) : (
-            <X className="h-4 w-4" />
+            <div className="flex items-center space-x-2 bg-secondary text-primary rounded-md px-2 py-1">
+              <X className="h-4 w-4" />
+              <span>Close Sidebar</span>
+            </div>
           )}
         </Button>
       </div>
@@ -184,6 +190,8 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </div>
       )}
+
+      {/* Sidebar toggle button next to nav (close / open) */}
 
       <nav className="flex-1 p-4 space-y-1 ">
         {navigation.map((item) => {

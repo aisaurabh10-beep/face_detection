@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // output: "export",  // export the build as static files
 };
 
 export default nextConfig;

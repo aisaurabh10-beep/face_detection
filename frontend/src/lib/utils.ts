@@ -16,6 +16,15 @@ export function formatDate(date: Date | string): string {
   });
 }
 
+export function formatDateOnly(date: Date | string): string {
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export function formatTime(date: Date | string): string {
   const d = new Date(date);
   return d.toLocaleTimeString("en-US", {

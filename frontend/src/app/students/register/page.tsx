@@ -12,7 +12,7 @@ import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 type StreamSource = "device" | "actual";
 
@@ -59,24 +59,6 @@ export default function RegisterStudentPage() {
         capturedBlobs.length > 0)
     );
   }, [form, capturedBlobs]);
-
-  // Load sample images for embedding guidance (from public/sample-images)
-  useEffect(() => {
-    const loadSamples = async () => {
-      try {
-        const res = await fetch("/api/sample-images");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (Array.isArray(data.images)) {
-          setSampleImages(data.images);
-        }
-      } catch {
-        // ignore errors, samples are optional
-      }
-    };
-
-    loadSamples();
-  }, []);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
