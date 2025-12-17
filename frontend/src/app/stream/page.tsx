@@ -2,17 +2,38 @@
 
 import StreamPlayer from "@/components/camera/StreamPlayer";
 import { CAMERAS } from "@/lib/constants";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
 
 function StreamContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const expand = searchParams.get("expand") === "true";
 
-  const content = <StreamPlayer cameras={CAMERAS} />;
-  if (expand) return content;
+  useEffect(() => {
+    if (!expand) return;
 
-  return content;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        router.push("/stream");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expand, router]);
+
+  const player = (
+    <div className="w-full h-full">
+      <StreamPlayer cameras={CAMERAS} />
+    </div>
+  );
+
+  if (expand) {
+    return <div className="fixed inset-0 z-50 bg-black">{player}</div>;
+  }
+
+  return <div className="h-full">{player}</div>;
 }
 
 export default function CamerasPage() {

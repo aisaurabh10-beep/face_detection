@@ -1,29 +1,37 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {  X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { CLASSES, getDivisionsForClass } from "@/lib/helper";
-import { MAX_UPLOAD, CAMERAS } from "@/lib/constants";
-import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
-import { AxiosError } from "axios";
 import Loader from "@/components/Loader";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { SuccessPopup } from "@/components/ui/success-popup";
+import { CAMERAS, MAX_UPLOAD } from "@/lib/constants";
+import { CLASSES, getDivisionsForClass } from "@/lib/helper";
+import RTSPtoWebClient from "@/lib/RTSPtoWebClient";
+import { X } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+type StreamSource = "device" | "actual";
 
 export default function RegisterStudentPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLVideoElement | null>(null);
   const [streaming, setStreaming] = useState(false);
+  const [source, setSource] = useState<StreamSource>("actual");
+  const [selectedCameraId, setSelectedCameraId] = useState<string | null>(
+    CAMERAS[0]?.id ?? null
+  );
   const [capturedBlobs, setCapturedBlobs] = useState<Blob[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
+  const [sampleImages, setSampleImages] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     studentId: "",
@@ -52,6 +60,24 @@ export default function RegisterStudentPage() {
     );
   }, [form, capturedBlobs]);
 
+  // Load sample images for embedding guidance (from public/sample-images)
+  useEffect(() => {
+    const loadSamples = async () => {
+      try {
+        const res = await fetch("/api/sample-images");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data.images)) {
+          setSampleImages(data.images);
+        }
+      } catch {
+        // ignore errors, samples are optional
+      }
+    };
+
+    loadSamples();
+  }, []);
+
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -68,28 +94,89 @@ export default function RegisterStudentPage() {
     setForm((prev) => ({ ...prev, photoFiles: nextFiles }));
   };
 
-  // Device camera functions (commented out)
   const startCamera = useCallback(async () => {
-    try {
-      const media = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
+    if (!videoRef.current || streamInitializedRef.current) return;
+
+    // Device camera (only intended for development)
+    if (source === "device") {
+      try {
+        const media = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
         videoRef.current.srcObject = media as MediaStream;
         await videoRef.current.play();
         setStreaming(true);
+        setStreamError("");
+      } catch (err) {
+        console.error(err);
+        setStreamError("Unable to access device camera");
       }
-    } catch (err) {
-      setErrorMsg("Unable to access camera");
+      return;
+    }
+
+    // Actual RTSP cameras
+    if (!canvasRef.current) return;
+
+    const cameraId = selectedCameraId || CAMERAS[0]?.id;
+    const camera = CAMERAS.find((c) => c.id === cameraId);
+
+    if (!camera) {
+      setStreamError("No cameras available");
+      return;
+    }
+
+    streamInitializedRef.current = true;
+    setStreamError("");
+
+    RTSPtoWebClient.setupStream(
+      camera.id,
+      videoRef.current,
+      () => {
+        setStreaming(true);
+
+        // Mirror stream to preview video (second video element)
+        setTimeout(() => {
+          if (canvasRef.current && videoRef.current?.srcObject) {
+            canvasRef.current.srcObject = videoRef.current.srcObject;
+            canvasRef.current.play?.().catch(console.error);
+          }
+        }, 100);
+      },
+      (error) => {
+        console.error("WebRTC stream setup error:", error);
+        setStreamError(`WebRTC stream error: ${error.message}`);
+        setStreaming(false);
+        streamInitializedRef.current = false;
+      }
+    );
+  }, [source, selectedCameraId]);
+
+  const stopCamera = useCallback(() => {
+    setStreaming(false);
+    streamInitializedRef.current = false;
+    setStreamError("");
+
+    if (videoRef.current) {
+      try {
+        const mediaStream = videoRef.current.srcObject as MediaStream | null;
+        if (mediaStream) {
+          mediaStream.getTracks().forEach((t) => t.stop());
+        }
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+      } catch {}
+    }
+
+    if (canvasRef.current) {
+      try {
+        canvasRef.current.pause?.();
+        canvasRef.current.srcObject = null;
+      } catch {}
     }
   }, []);
 
-  const stopCamera = useCallback(() => {
-    const stream = videoRef.current?.srcObject as MediaStream | undefined;
-    stream?.getTracks().forEach((t) => t.stop());
-    setStreaming(false);
-  }, []);
-
-  // Actual camera functions
-  
+  // Actual camera functions (old device camera & RTSP examples kept for reference)
+  //
   // const startCamera = useCallback(async () => {
   //   if (!videoRef.current || !canvasRef.current || streamInitializedRef.current)
   //     return;
@@ -185,6 +272,34 @@ export default function RegisterStudentPage() {
     setCapturedBlobs((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const removeUploadedAt = (idx: number) => {
+    setForm((prev) => ({
+      ...prev,
+      photoFiles: prev.photoFiles.filter((_, i) => i !== idx),
+    }));
+  };
+
+  // Combine uploaded files and captured blobs for display
+  const allImages = useMemo(() => {
+    const images: Array<{
+      type: "file" | "blob";
+      data: File | Blob;
+      index: number;
+    }> = [];
+
+    // Add uploaded files
+    form.photoFiles.forEach((file, idx) => {
+      images.push({ type: "file", data: file, index: idx });
+    });
+
+    // Add captured blobs
+    capturedBlobs.forEach((blob, idx) => {
+      images.push({ type: "blob", data: blob, index: idx });
+    });
+
+    return images;
+  }, [form.photoFiles, capturedBlobs]);
+
   const submitForm = useCallback(async () => {
     setErrorMsg("");
     setSuccessMsg("");
@@ -265,8 +380,8 @@ export default function RegisterStudentPage() {
     }
   }, [canSubmit, form, capturedBlobs]);
 
-  if(submitting){
-    return <Loader/>;
+  if (submitting) {
+    return <Loader />;
   }
 
   return (
@@ -274,7 +389,9 @@ export default function RegisterStudentPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Student Details</CardTitle>
+            <CardTitle className="text-xl font-semibold leading-none tracking-tight">
+              Student Details
+            </CardTitle>
           </CardHeader>
           {streamError && (
             <div className=" top-2 left-2 right-2 z-10 border mx-6 mb-4">
@@ -370,7 +487,7 @@ export default function RegisterStudentPage() {
 
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
-                Upload Photos (max 3)
+                Upload Photos (max {MAX_UPLOAD})
               </p>
               <Input
                 type="file"
@@ -380,47 +497,105 @@ export default function RegisterStudentPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                variant={streaming ? "secondary" : "default"}
-                onClick={streaming ? stopCamera : startCamera}
-                type="button"
-              >
-                {streaming
-                  ? "Stop Camera"
-                  : `Start ${CAMERAS[0]?.name || "Camera"}`}
-              </Button>
-              <Button
-                onClick={captureFrame}
-                type="button"
-                disabled={
-                  capturedBlobs.length >= MAX_UPLOAD ||
-                  !streaming ||
-                  (form.photoFiles && form.photoFiles.length > 0)
-                }
-              >
-                Capture
-              </Button>
-              {capturedBlobs.length > 0 && (
-                <Badge variant="success">
-                  {capturedBlobs.length}/{MAX_UPLOAD} captured
-                </Badge>
-              )}
-              {capturedBlobs.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3 my-2">
+              <div className="flex items-center gap-2">
+                {process.env.NODE_ENV === "development" && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={source === "device" ? "default" : "outline"}
+                    onClick={() => setSource("device")}
+                    disabled={streaming}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Device
+                  </Button>
+                )}
                 <Button
                   type="button"
-                  variant="ghost"
-                  onClick={() => setCapturedBlobs([])}
+                  size="sm"
+                  variant={source === "actual" ? "default" : "outline"}
+                  onClick={() => setSource("actual")}
+                  disabled={streaming}
+                  className="h-8 px-2 text-xs"
                 >
-                  Clear Captures
+                  Actual
                 </Button>
+              </div>
+
+              {source === "actual" && (
+                <div className="flex items-center gap-2">
+                  <select
+                    className="h-8 px-2 border rounded-md bg-background text-xs"
+                    value={selectedCameraId ?? ""}
+                    onChange={(e) =>
+                      setSelectedCameraId(
+                        e.target.value ? e.target.value : CAMERAS[0]?.id ?? null
+                      )
+                    }
+                    disabled={streaming}
+                  >
+                    {CAMERAS.map((cam) => (
+                      <option key={cam.id} value={cam.id}>
+                        {cam.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
+
+              <div className="flex items-center gap-2 ml-auto">
+                {allImages.length > 0 && (
+                  <Badge variant="success">
+                    {allImages.length}/{MAX_UPLOAD} images
+                  </Badge>
+                )}
+                {allImages.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setCapturedBlobs([]);
+                      setForm((prev) => ({ ...prev, photoFiles: [] }));
+                    }}
+                    className="h-8 px-2 text-xs"
+                  >
+                    Clear All
+                  </Button>
+                )}
+                <Button
+                  variant={streaming ? "secondary" : "default"}
+                  onClick={streaming ? stopCamera : startCamera}
+                  type="button"
+                  className="h-8 px-2 text-xs"
+                  size="sm"
+                >
+                  {streaming
+                    ? "Stop Camera"
+                    : source === "device"
+                    ? "Start Device Camera"
+                    : `Start ${
+                        CAMERAS.find((c) => c.id === selectedCameraId)?.name ||
+                        "Camera"
+                      }`}
+                </Button>
+                <Button
+                  onClick={captureFrame}
+                  type="button"
+                  disabled={
+                    capturedBlobs.length >= MAX_UPLOAD ||
+                    !streaming ||
+                    (form.photoFiles && form.photoFiles.length > 0)
+                  }
+                  className="h-8 px-2 text-xs"
+                >
+                  Capture
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden">
-                {/* Stream error display */}
-
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
@@ -429,7 +604,7 @@ export default function RegisterStudentPage() {
                   autoPlay
                 />
               </div>
-              <div className="relative w-full aspect-video rounded-md overflow-hidden p-3">
+              <div className="relative w-full aspect-video rounded-md overflow-hidden">
                 {/* <canvas ref={canvasRef} className="hidden" /> */}
                 <video
                   ref={canvasRef}
@@ -438,27 +613,45 @@ export default function RegisterStudentPage() {
                   playsInline
                   autoPlay
                 />
-                <div className="grid grid-cols-3 gap-3">
-                  {capturedBlobs.map((blob, idx) => (
-                    <div
-                      key={`cap-${idx}`}
-                      className="relative w-full aspect-square bg-background rounded-md overflow-hidden"
-                    >
-                      <img
-                        src={URL.createObjectURL(blob)}
-                        alt={`Captured image ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeCapturedAt(idx)}
-                        className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white"
-                        aria-label="Remove capture"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
+                <div className="grid grid-cols-3 gap-2 bg-muted rounded-md">
+                  {allImages.length === 0 ? (
+                    <div className="col-span-3 text-center text-sm text-muted-foreground py-8">
+                      No images selected. Upload photos or capture from camera.
                     </div>
-                  ))}
+                  ) : (
+                    allImages.map((item, idx) => (
+                      <div
+                        key={`${item.type}-${item.index}-${idx}`}
+                        className="relative w-full aspect-square bg-background rounded-md overflow-hidden"
+                      >
+                        <Image
+                          src={URL.createObjectURL(item.data)}
+                          alt={
+                            item.type === "file"
+                              ? `Uploaded image ${item.index + 1}`
+                              : `Captured image ${item.index + 1}`
+                          }
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (item.type === "file") {
+                              removeUploadedAt(item.index);
+                            } else {
+                              removeCapturedAt(item.index);
+                            }
+                          }}
+                          className="absolute top-1 right-1 inline-flex items-center justify-center w-6 h-6 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                          aria-label="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
@@ -470,27 +663,106 @@ export default function RegisterStudentPage() {
             )}
 
             {successMsg && (
-              <div className="text-sm text-green-500">{successMsg}</div>
+              <SuccessPopup
+                message={successMsg}
+                onClose={() => setSuccessMsg("")}
+                autoClose={true}
+                autoCloseDelay={3000}
+              />
             )}
 
-            <div className="flex justify-end">
-              <Button onClick={submitForm} disabled={!canSubmit || submitting}>
+            <div className="flex  !mt-4">
+              <Button
+                onClick={submitForm}
+                disabled={!canSubmit || submitting}
+                className="w-2/4"
+              >
                 {submitting ? "Submitting..." : "Register Student"}
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Instructions (POC)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm text-muted-foreground">
-            <p>- You can either upload a photo or capture from webcam.</p>
-            <p>- Face encoding will be generated by backend automatically.</p>
-          </CardContent>
-        </Card>
+        <RegistrationInstructionsCard sampleImages={sampleImages} />
       </div>
     </div>
+  );
+}
+
+function RegistrationInstructionsCard({
+  sampleImages,
+}: {
+  sampleImages: string[];
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Picture Upload Guidelines</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm text-muted-foreground">
+        <p>
+          For best face embeddings, use clear, frontal face images with good
+          lighting. Avoid images where the face is very small, heavily occluded,
+          or turned away.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="font-medium text-foreground mb-1">Good examples</p>
+            <div className="space-y-2">
+              <p>
+                - Single person in frame, face centered and clearly visible.
+              </p>
+              <p>- Neutral expression or slight smile.</p>
+              <p>- No heavy shadows, sunglasses, or large obstructions.</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-medium text-foreground mb-1">Bad examples</p>
+            <div className="space-y-2">
+              <p>- Multiple faces in the same image.</p>
+              <p>- Face heavily tilted, turned away, or cropped.</p>
+              <p>
+                - Strong backlight, motion blur, masks, or large accessories.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          {sampleImages.map((src, idx) => (
+            <div
+              key={idx}
+              className="w-22 h-21 rounded-md overflow-hidden bg-muted border"
+            >
+              <img
+                src={src}
+                alt={`Sample correct embedding ${idx + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const parent = e.currentTarget.parentElement as HTMLElement;
+                  if (parent) parent.style.display = "none";
+                }}
+              />
+            </div>
+          ))}
+          {sampleImages.length === 0 && (
+            <div className="col-span-4 flex justify-center my-2">
+              <div className="w-full max-w-2xl rounded-md overflow-hidden bg-muted border">
+                <Image
+                  src="/gudieline.png"
+                  alt="Picture Upload Guidelines"
+                  width={400}
+                  height={400}
+                  className="w-full h-auto max-h-[450px] object-contain"
+                  unoptimized
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

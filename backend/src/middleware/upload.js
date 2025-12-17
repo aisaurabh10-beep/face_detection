@@ -54,10 +54,10 @@ const imageFilter = (req, file, cb) => {
 // Multer configurations
 const studentUpload = multer({
   storage: studentStorage,
-  fileFilter: imageFilter,
-  limits: {
-    fileSize: config.MAX_FILE_SIZE,
-  },
+  // fileFilter: imageFilter,
+  // limits: {
+  //   fileSize: config.MAX_FILE_SIZE,
+  // },
 });
 
 const unknownUpload = multer({

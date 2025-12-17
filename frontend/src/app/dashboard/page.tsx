@@ -1,13 +1,12 @@
 "use client";
 
-import { DashboardStats } from "@/components/dashboard/dashboard-stats";
-import { LastDetectionCard } from "@/components/dashboard/last-detection-card";
-import { AttendanceChart } from "@/components/dashboard/attendance-chart";
-import { DivisionAttendanceChart } from "@/components/dashboard/division-attendance-chart";
 import StreamPlayer from "@/components/camera/StreamPlayer";
+import { AllDetectionsCard } from "@/components/dashboard/all-detections";
+import { AttendanceChart } from "@/components/dashboard/attendance-chart";
+import { DashboardStats } from "@/components/dashboard/dashboard-stats";
+import { DivisionAttendanceChart } from "@/components/dashboard/division-attendance-chart";
 import { CAMERAS } from "@/lib/constants";
 import { Suspense } from "react";
-import { AllDetectionsCard } from "@/components/dashboard/all-detections";
 
 export default function DashboardPage() {
   return (

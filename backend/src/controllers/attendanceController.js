@@ -49,7 +49,7 @@ const markAttendance = async (req, res) => {
       attendance.confidence = confidence ?? attendance.confidence;
       attendance.deepface_distance =
         deepface_distance ?? attendance.deepface_distance;
-      attendance.location = location || attendance.location || "";
+      attendance.location = attendance.location || "";
       attendance.logs = Array.isArray(attendance.logs) ? attendance.logs : [];
       attendance.logs.push(logEntry);
 
@@ -64,7 +64,7 @@ const markAttendance = async (req, res) => {
         confidence,
         status: "present",
         deepface_distance: deepface_distance || 0,
-        location: location || "",
+        location: "",
         logs: [logEntry],
       });
 
@@ -89,6 +89,7 @@ const markAttendance = async (req, res) => {
       data: attendance,
     });
   } catch (error) {
+    console.error("Error marking attendance:", error);
     res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: true,
@@ -126,12 +127,19 @@ const getTodayAttendance = async (req, res) => {
     const attendance = await Attendance.find(filter)
       .populate(
         "studentId",
-        "firstName lastName studentId class rollNumber photo"
+        "firstName lastName studentId class rollNumber photos division"
       )
-      .sort({ entryTime: -1 })
+      .sort({ updatedAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
+      .select("-deepface_distance  -__v -createdAt -status")
       .lean();
+
+    attendance.forEach((item) => {
+      if (item?.studentId?.photos?.length) {
+        item.studentId.photos = item.studentId.photos.slice(0, 1);
+      }
+    });
 
     const total = await Attendance.countDocuments(filter);
 

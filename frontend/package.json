@@ -1,39 +1,41 @@
 {
   "name": "attendance-frontend-poc",
+  "description": "Attendance Management System",
+  "author": "BharathaTechno IT PVT LTD",
   "version": "0.1.0",
   "private": true,
   "main": "main.js",
-
   "scripts": {
     "dev": "next dev -p 3015",
     "build": "next build",
-    "start": "next start -p 3015",
-    "lint": "eslint .",
-    "electron": "electron .",
-    "dist": "electron-builder --win"
+    "build:web": "next build",
+    "start:web": "next start -p 3015",
+    "electron:dev": "electron .",
+    "build:win": "npm run build:web && electron-builder --win",
+    "build:mac": "npm run build:web && electron-builder --mac"
   },
-
   "build": {
-    "appId": "com.yourapp.client",
+    "appId": "com.attendance.client",
     "productName": "Attendance App",
-
     "files": [
       ".next/**/*",
       "public/**/*",
       "main.js",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
     ],
-
+    "mac": {
+      "target": "dmg",
+      "icon": "public/logo.svg"
+    },
     "win": {
       "target": "nsis",
-      "icon": "public/icon.ico"
+      "icon": "public/logo.svg"
     },
-
     "directories": {
       "output": "dist"
     }
   },
-
   "dependencies": {
     "@radix-ui/react-slot": "^1.1.0",
     "@reduxjs/toolkit": "^2.9.0",
@@ -49,12 +51,12 @@
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.4"
   },
-
   "devDependencies": {
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.0",
+    "baseline-browser-mapping": "^2.9.6",
     "electron": "^39.2.6",
     "electron-builder": "^26.0.12",
     "eslint": "^9",
@@ -65,4 +67,3 @@
     "typescript": "^5"
   }
 }
-

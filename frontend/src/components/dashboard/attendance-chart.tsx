@@ -88,7 +88,6 @@ export function AttendanceChart() {
     return totals;
   }, [classesData]);
 
-  const unknownFaces = state.data?.summary?.unknownFaces ?? 0;
   const totalAbsent = state.data?.summary?.totalAbsent ?? totalFallback.absent;
   const totalAbsentPct =
     state.data?.summary?.totalAbsentPercentage ??
@@ -162,12 +161,12 @@ export function AttendanceChart() {
       <CardContent className="space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-3 rounded-lg bg-yellow-500/10">
+          {/* <div className="p-3 rounded-lg bg-yellow-500/10">
             <div className="text-xs text-muted-foreground">Unknown Faces</div>
             <div className="text-lg font-semibold text-yellow-500">
               {unknownFaces}
             </div>
-          </div>
+          </div> */}
           <div className="p-3 rounded-lg bg-green-500/10">
             <div className="text-xs text-muted-foreground">Total Present</div>
             <div className="text-lg font-semibold text-green-500">

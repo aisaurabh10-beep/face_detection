@@ -48,6 +48,8 @@ class SocketManager {
         message: string;
       }) => {
         console.log("📊 Attendance marked:", data);
+
+        console.log("----- +++++++++++++ ", data)
         this.emit("attendance_marked", data);
       }
     );

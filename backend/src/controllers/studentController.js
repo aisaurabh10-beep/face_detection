@@ -12,6 +12,7 @@ const getAllStudents = async (req, res) => {
       rollNumber,
       email,
       name,
+      fields,
     } = req.query;
 
     const filter = {};
@@ -26,11 +27,26 @@ const getAllStudents = async (req, res) => {
 
     // Sorting by rollNumber ascending (if numeric strings, cast for sort stability)
     const sort = { rollNumber: 1 };
-
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
+    const projection = fields
+      ? fields
+          .split(",")
+          .map((f) => f.trim())
+          .filter(Boolean)
+          .join(" ")
+      : "studentId firstName lastName class division rollNumber photos email isActive";
+
+    const baseQuery = Student.find(filter)
+      .sort(sort)
+      .limit(parseInt(limit))
+      .skip(skip)
+      .select(projection)
+      .slice("photos", 1) // send only one photo
+      .select("-phone -photoDir -faceEmbedding -isActive  -__v -createdAt");
+
     const [students, total] = await Promise.all([
-      Student.find(filter).sort(sort).limit(parseInt(limit)).skip(skip).lean(),
+      baseQuery.lean(),
       Student.countDocuments(filter),
     ]);
 
@@ -92,6 +108,7 @@ const registerStudent = async (req, res) => {
             message: err.message || config.MESSAGES.ERROR.FILE_UPLOAD_ERROR,
           });
         }
+        console.log("req.files ==== ", req.files);
 
         const {
           studentId,
@@ -199,9 +216,9 @@ const registerStudent = async (req, res) => {
             });
           }
         } catch (syncError) {
-          return res.status(config.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            error: true,
+          return res.status(config.HTTP_STATUS.CREATED).json({
+            success: true,
+            // error: true,
             message: config.MESSAGES.ERROR.EMBEDDING_API_ERROR,
           });
         }

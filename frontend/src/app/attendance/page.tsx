@@ -64,6 +64,13 @@ export default function AttendancePage() {
   const [sortBy, setSortBy] = useState<SortOption>("rollNumber");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const availableDivisions = useMemo(() => {
     const list = Object.values(DIVISIONS).flat();
     return Array.from(new Set(list));
@@ -77,8 +84,8 @@ export default function AttendancePage() {
     switch (dateRange) {
       case "current-month":
         return {
-          startDate: startOfMonth.toISOString().split("T")[0],
-          endDate: endOfMonth.toISOString().split("T")[0],
+          startDate: formatDateLocal(startOfMonth),
+          endDate: formatDateLocal(new Date()),
         };
       case "last-month":
         const lastMonthStart = new Date(
@@ -88,8 +95,8 @@ export default function AttendancePage() {
         );
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         return {
-          startDate: lastMonthStart.toISOString().split("T")[0],
-          endDate: lastMonthEnd.toISOString().split("T")[0],
+          startDate: formatDateLocal(lastMonthStart),
+          endDate: formatDateLocal(lastMonthEnd),
         };
       case "last-3-months":
         const threeMonthsAgo = new Date(
@@ -98,28 +105,28 @@ export default function AttendancePage() {
           1
         );
         return {
-          startDate: threeMonthsAgo.toISOString().split("T")[0],
-          endDate: now.toISOString().split("T")[0],
+          startDate: formatDateLocal(threeMonthsAgo),
+          endDate: formatDateLocal(now),
         };
       case "last-6-months":
         const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
         return {
-          startDate: sixMonthsAgo.toISOString().split("T")[0],
-          endDate: now.toISOString().split("T")[0],
+          startDate: formatDateLocal(sixMonthsAgo),
+          endDate: formatDateLocal(now),
         };
       case "current-year":
         const yearStart = new Date(now.getFullYear(), 0, 1);
         const yearEnd = new Date(now.getFullYear(), 11, 31);
         return {
-          startDate: yearStart.toISOString().split("T")[0],
-          endDate: yearEnd.toISOString().split("T")[0],
+          startDate: formatDateLocal(yearStart),
+          endDate: formatDateLocal(yearEnd),
         };
       case "last-year":
         const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
         const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
         return {
-          startDate: lastYearStart.toISOString().split("T")[0],
-          endDate: lastYearEnd.toISOString().split("T")[0],
+          startDate: formatDateLocal(lastYearStart),
+          endDate: formatDateLocal(lastYearEnd),
         };
       case "custom":
         return {
@@ -128,8 +135,8 @@ export default function AttendancePage() {
         };
       default:
         return {
-          startDate: startOfMonth.toISOString().split("T")[0],
-          endDate: endOfMonth.toISOString().split("T")[0],
+          startDate: formatDateLocal(startOfMonth),
+          endDate: formatDateLocal(endOfMonth),
         };
     }
   };

@@ -1,14 +1,15 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Users, UserPlus, UserMinus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { api } from "@/lib/api";
+import { PAGE_SIZE } from "@/lib/constants";
+import { CLASSES, DIVISIONS, getPicUrl } from "@/lib/helper";
+import { Search, UserMinus, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
-import { getPicUrl, CLASSES, DIVISIONS } from "@/lib/helper";
 
 export default function StudentsPage() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     class: "",
@@ -60,18 +61,14 @@ export default function StudentsPage() {
     return Array.from(new Set(list));
   }, []);
 
-  const handleToggleStatus = async (studentId: string) => {
+  const handleToggleStatus = (studentId: string) => {
     setActionLoading(studentId);
-    try {
-      await api.toggleStudentStatus(studentId);
-      // Refresh the students list
-      await fetchStudents();
-    } catch (error) {
-      console.error("Failed to update student status:", error);
-      setErrorMsg("Failed to update student status");
-    } finally {
-      setActionLoading(null);
-    }
+    setStudents((prev) =>
+      prev.map((s) =>
+        s._id === studentId ? { ...s, isActive: !s.isActive } : s
+      )
+    );
+    setActionLoading(null);
   };
 
   return (
@@ -247,11 +244,11 @@ export default function StudentsPage() {
                           size="sm"
                           onClick={() => handleToggleStatus(s._id)}
                           disabled={actionLoading === s._id}
-                          className={`h-8 px-2 ${
+                          className={
                             s.isActive
-                              ? "text-red-600 hover:text-red-700 hover:bg-red-50"
-                              : "text-green-600 hover:text-green-700 hover:bg-green-50"
-                          }`}
+                              ? "h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              : "h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          }
                           title={s.isActive ? "Make Inactive" : "Make Active"}
                         >
                           {s.isActive ? (
@@ -292,32 +289,105 @@ export default function StudentsPage() {
           </div>
 
           {/* Pagination */}
-
           {students.length ? (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Page {page} of {Math.max(1, Math.ceil(total / limit))}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  disabled={page <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={page >= Math.ceil(total / limit)}
-                  onClick={() => setPage((p) => p + 1)}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+            <Pagination
+              page={page}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+              onLimitChange={setLimit}
+            />
           ) : null}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+interface PaginationProps {
+  page: number;
+  total: number;
+  limit: number;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
+}
+
+function Pagination({
+  page,
+  total,
+  limit,
+  onPageChange,
+  onLimitChange,
+}: PaginationProps) {
+  const [editing, setEditing] = useState(false);
+  const totalPages = Math.max(1, Math.ceil(total / Math.max(1, limit)));
+
+  const handleLimitChange = (value: string) => {
+    const num = parseInt(value, 10);
+    if (!Number.isNaN(num) && num > 0) {
+      onLimitChange(num);
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (!e.target.value) {
+      onLimitChange(10);
+    }
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === "Escape") {
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between mt-4">
+      <div className="text-sm text-muted-foreground">
+        Page {page} of {totalPages}
+      </div>
+      <div className="flex items-center gap-3">
+        {editing ? (
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={1}
+              value={limit}
+              onChange={(e) => handleLimitChange(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={(e) => handleKeyDown(e)}
+              className="w-20 h-8 text-sm"
+              autoFocus
+            />
+            <span className="text-sm text-muted-foreground">per page</span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="text-sm text-muted-foreground hover:underline"
+            onClick={() => setEditing(true)}
+          >
+            {limit} per page
+          </button>
+        )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+          >
+            Prev
+          </Button>
+          <Button
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => onPageChange(page + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

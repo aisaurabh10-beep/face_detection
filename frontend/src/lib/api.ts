@@ -69,17 +69,11 @@ class ApiClient {
     rollNumber?: string;
     email?: string;
     name?: string;
+    fields?: string; // comma-separated list of fields to return
   }) {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
-    if (params?.class) searchParams.append("class", params.class);
-    if (params?.division) searchParams.append("division", params.division);
-    if (params?.rollNumber)
-      searchParams.append("rollNumber", params.rollNumber);
-    if (params?.email) searchParams.append("email", params.email);
-    if (params?.name) searchParams.append("name", params.name);
-
     const query = searchParams.toString();
     const url = `/students${query ? `?${query}` : ""}`;
     return this.axios.get(url);

@@ -1,15 +1,14 @@
-import { QuickStatItem } from "@/lib/types";
 import config from "@/config/config";
+import { QuickStatItem } from "@/lib/types";
 import {
-  Users,
-  UserCheck,
-  UserX,
-  TrendingUp,
-  AlertTriangle,
   Calendar,
   Camera,
   LayoutDashboard,
+  TrendingUp,
+  UserCheck,
   UserPlus,
+  Users,
+  UserX
 } from "lucide-react";
 
 // Static classes list (used as enum-like values, also persisted in DB)
@@ -66,33 +65,63 @@ export const navigation = [
     name: "Attendance",
     href: "/attendance",
     icon: Calendar,
-    description: "View attendance records",
+    description: "View attendance reports",
   },
 ];
 
 export const defaultQuickStats: QuickStatItem[] = [
   {
-    name: "Present Today",
-    value: "-",
-    icon: UserCheck,
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
-  },
-  {
-    name: "Absent Today",
+    name: "Total Students",
     value: "-",
     icon: Users,
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
   },
   {
-    name: "Unknown Faces",
-    value: "-",
-    icon: AlertTriangle,
+    name: "Total Classes",
+    value: String(CLASSES.length),
+    icon: UserCheck,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
+  },
+  {
+    name: "Total Divisions",
+    value: String(
+      Object.values(DIVISIONS).reduce(
+        (sum, divisions) => sum + divisions.length,
+        0
+      )
+    ),
+    icon: UserPlus,
     color: "text-yellow-500",
     bgColor: "bg-yellow-500/10",
   },
 ];
+
+// Commented out - Previous stats (Present Today, Absent Today, Unknown Faces)
+// export const defaultQuickStats: QuickStatItem[] = [
+//   {
+//     name: "Present Today",
+//     value: "-",
+//     icon: UserCheck,
+//     color: "text-green-500",
+//     bgColor: "bg-green-500/10",
+//   },
+//   {
+//     name: "Absent Today",
+//     value: "-",
+//     icon: Users,
+//     color: "text-blue-500",
+//     bgColor: "bg-blue-500/10",
+//   },
+//   {
+//     name: "Unknown Faces",
+//     value: "-",
+//     icon: AlertTriangle,
+//     color: "text-yellow-500",
+//     bgColor: "bg-yellow-500/10",
+//   },
+// ];
 
 export const getPageName = (pathname: string): string => {
   const pathMap: { [key: string]: string } = {

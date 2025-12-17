@@ -1,3 +1,5 @@
+import { Student } from "./api";
+
 export interface QuickStatItem {
   name: string;
   value: string;
@@ -109,3 +111,31 @@ export interface DailyClassWiseResponse {
   classes: ClassWiseDailyStat[];
   summary: DailyOverviewSummary;
 }
+
+export interface AttendanceLog {
+  timestamp: string;
+  cameraId: string;
+  confidence: number;
+  deepface_distance?: number;
+  location?: string;
+  _id?: string;
+};
+
+export interface TodayAttendance {
+  _id: string;
+  student: Student | any;
+  studentId?: Student | string | any;
+  id?: string;
+  entryTime?: string;
+  exitTime?: string;
+  date: string;
+  logs: AttendanceLog[];
+  updatedAt: string;
+  time?: string;
+  status?: "present" | "late" | "absent";
+  cameraId?: string;
+  confidence?: number;
+  deepface_distance?: number;
+  location?: string;
+  faceImageUrl?: string;
+};

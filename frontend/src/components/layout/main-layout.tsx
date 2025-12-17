@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { Sidebar } from "./sidebar";
-import { Header } from "./header";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { useState } from "react";
+import { Header } from "./header";
+import { Sidebar } from "./sidebar";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -41,14 +41,14 @@ export function MainLayout({ children, className }: MainLayoutProps) {
       </div>
 
       {/* Floating Logo - Bottom Right Corner */}
+
       <div className="fixed bottom-6 right-6 z-50">
         <div className="shadow-lg hover:shadow-xl transition-shadow">
           <Image
-            src="/logo.svg"
+            src="/logo2.svg"
             alt="BharathaTechno Logo"
             width={25}
             height={25}
-            // className="rounded-full"
             unoptimized
           />
         </div>
@@ -56,4 +56,3 @@ export function MainLayout({ children, className }: MainLayoutProps) {
     </div>
   );
 }
-

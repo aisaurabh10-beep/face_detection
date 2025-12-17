@@ -76,46 +76,6 @@ export function StreamPlayer({
     return cameras.find((c) => c.id === selectedCameraId) || cameras[0] || null;
   }, [cameras, selectedCameraId]);
 
-  // useEffect(() => {
-  //   const show = () => {
-  //     console.log("show overlay");
-  //     setShowOverlay(true);
-  //     // if (videoRef.current && !videoRef.current.paused) {
-  //     //   try {
-  //     //     videoRef.current.pause();
-  //     //   } catch {}
-  //     // }
-  //     // if (stopOverlayTimer.current) {
-  //     //   window.clearTimeout(stopOverlayTimer.current);
-  //     // }
-
-  //     stopOverlayTimer.current = window.setTimeout(() => {
-  //       console.log("hide overlay");
-  //       setShowOverlay(false);
-  //       // if (videoRef.current && isStreaming) {
-  //       //   try {
-  //       //     videoRef.current.play();
-  //       //   } catch {}
-  //       // }
-  //     }, 2000);
-  //   };
-
-  //   const handleAttendance = () => show();
-  //   const handleUnknown = () => show();
-
-  //   on("attendance_marked", handleAttendance as any);
-  //   on("unknown_face_detected", handleUnknown as any);
-
-  //   return () => {
-  //     off("attendance_marked", handleAttendance as any);
-  //     off("unknown_face_detected", handleUnknown as any);
-  //     if (stopOverlayTimer.current) {
-  //       window.clearTimeout(stopOverlayTimer.current);
-  //       stopOverlayTimer.current = null;
-  //     }
-  //   };
-  // }, [on, off]);
-
   useEffect(() => {
     const show = () => {
       console.log("show overlay");
@@ -146,7 +106,7 @@ export function StreamPlayer({
         stopOverlayTimer.current = null;
       }
     };
-  }, []); // no deps
+  }, [on, off]);
 
   const start = useCallback(async () => {
     setIsStreaming(true);
@@ -224,7 +184,7 @@ export function StreamPlayer({
     try {
       // Test data for attendance marking
       const testData = {
-        studentId: "68e57a3282accb11ff5d1a25", // Example ObjectId - you may need to replace with actual student ID
+        studentId: "69423488179783801dd9f5db", // Example ObjectId - you may need to replace with actual student ID
         cameraId: "camera1",
         confidence: 0.95,
       };
@@ -245,7 +205,7 @@ export function StreamPlayer({
       // Clear message after 5 seconds
       setTimeout(() => setTestMessage(""), 5000);
     }
-  }, [selectedCameraId]);
+  }, []);
 
   const stop = useCallback(() => {
     setIsStreaming(false);
@@ -309,7 +269,7 @@ export function StreamPlayer({
       // }
     }, 50);
     return () => clearTimeout(t);
-  }, [source, selectedCameraId]);
+  }, [source, selectedCameraId, stop, start, isStreaming]);
 
   return (
     <Card
@@ -385,14 +345,16 @@ export function StreamPlayer({
               </>
             )}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTestAttendance}
-            disabled={testLoading}
-          >
-            {testLoading ? "Testing..." : "Test"}
-          </Button>
+          {config.env === "development" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestAttendance}
+              disabled={testLoading}
+            >
+              {testLoading ? "Testing..." : "Test"}
+            </Button>
+          )}
           {pathname === "/stream" ? (
             isExpanded ? (
               <Link href="/stream">
@@ -494,4 +456,3 @@ export function StreamPlayer({
 }
 
 export default StreamPlayer;
-

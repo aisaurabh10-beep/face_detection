@@ -13,3 +13,6 @@ export const CAMERAS = [
     url: "rtsp://admin:cctv@121@192.168.1.64:554/Streaming/Channels/101",
   },
 ];
+
+export const PAGE_SIZE = 10;
+export const MAX_LAST_DETECTIONS = 50;

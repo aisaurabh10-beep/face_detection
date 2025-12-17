@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatTime } from "@/lib/utils";
 import { getPageName } from "@/lib/helper";
 import { useSocket } from "@/lib/socket";
-import { NotificationDropdown } from "@/components/ui/notification-dropdown";
+// import { NotificationDropdown } from "@/components/ui/notification-dropdown";
 import { Menu, Search, Wifi, WifiOff, Activity, Clock } from "lucide-react";
 
 interface HeaderProps {
@@ -80,7 +80,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             {isConnected() ? (
               <div className="flex items-center space-x-1 text-sm">
                 <Activity className="h-4 w-4 text-green-500" />
-                <span className="text-muted-foreground text-green-500!">
+                <span className="text-muted-foreground !text-green-500">
                   Live
                 </span>
               </div>
@@ -93,7 +93,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </div>
 
           {/* Notifications */}
-          <NotificationDropdown />
+          {/* <NotificationDropdown /> */}
 
           {/* User Avatar */}
           {/* <div className="flex items-center space-x-3">

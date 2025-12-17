@@ -4,6 +4,9 @@ module.exports = {
   MONGODB_URI:
     process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/attendance_poc",
   STUDENT_LIMIT: process.env.STUDENT_LIMIT || 50,
+  PRESET_LICENSE_PASSWORD:
+    process.env.PRESET_LICENSE_PASSWORD || "BtAttendance@2025",
+  LICENSE_EXPIRY_DATE: process.env.LICENSE_EXPIRY_DATE || "2026-12-31",
   FRONTEND_URL: process.env.FRONTEND_URL || "http://localhost:3015",
   SOCKET_CORS_ORIGIN: process.env.SOCKET_CORS_ORIGIN || "http://localhost:3015",
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(", ") || [
@@ -13,7 +16,7 @@ module.exports = {
   ],
 
   // File Upload Configuration
-  MAX_FILE_SIZE: 15 * 1024 * 1024, // 15MB
+  MAX_FILE_SIZE: 50 * 1024 * 1024, // 15MB
   MAX_STUDENT_PHOTOS: 6,
   ALLOWED_FILE_TYPES: ["image/jpeg", "image/jpg", "image/png", "image/webp"],
   UPLOAD_BASE_DIR: "uploads",
@@ -67,7 +70,8 @@ module.exports = {
       PHOTOS_REQUIRED: "At least one photo is required",
       INVALID_IDS: "Invalid IDs provided",
       EMBEDDING_SYNC_FAILED: "Student saved but embedd",
-      EMBEDDING_API_ERROR: "Student saved but failed to call sync API",
+      EMBEDDING_API_ERROR:
+        "Student saved but looks like AI Model is not up and running",
       STUDENT_LIMIT_REACHED: "Student registration limit reached",
     },
   },

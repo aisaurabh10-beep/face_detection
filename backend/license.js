@@ -1,7 +1,8 @@
 const readline = require("readline/promises");
+const config = require("./src/config/config");
 
-const EXPIRY = new Date("2026-12-31");
-const PRESET_PASSWORD = process.env.LICENSE_PASSWORD || "BtAttendance@2025";
+const EXPIRY = new Date(config.LICENSE_EXPIRY_DATE);
+const PRESET_PASSWORD = config.PRESET_LICENSE_PASSWORD;
 
 async function promptPassword() {
   // 1) If provided via env, use it (CI/containers)

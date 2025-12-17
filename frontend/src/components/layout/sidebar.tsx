@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import axios from "axios";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,9 +11,6 @@ import { useEffect, useState } from "react";
 import { defaultQuickStats, navigation } from "@/lib/helper";
 import { QuickStatItem } from "@/lib/types";
 import Lottie from "lottie-react";
-
-// navigation and defaultQuickStats moved to @/lib/helper
-// types moved to @/lib/types
 
 interface SidebarProps {
   className?: string;
@@ -37,52 +33,83 @@ export function Sidebar({ className }: SidebarProps) {
 
   useEffect(() => {
     let mounted = true;
-    const controller = new AbortController();
     (async () => {
       try {
         if (!mounted) return;
-        const res = await api.getAttendanceStats(undefined, controller);
-        const stats = res?.data?.data;
-        const total = stats.totalStudents || 0;
-        const present = stats.presentStudents ?? 0;
-        const absent =
-          stats.absentStudents ??
-          (total > 0 ? Math.max(total - present, 0) : 0);
-        const absentPct =
-          total > 0 ? ((absent / total) * 100).toFixed(1) : "0.0";
-        const presentPct =
-          total > 0 ? ((present / total) * 100).toFixed(1) : "0.0";
-        const unknownFaces = Number(stats.unknownFacesToday) || 0;
+        // Fetch total students count
+        const res = await api.getStudents({ page: 1, limit: 1 });
+        const totalStudents = res?.data?.data?.total || 0;
 
-        const presentLabel = `${present} (${presentPct}%)`;
-        const absentLabel = `${absent} (${absentPct}%)`;
+        if (!mounted) return;
         setQuickStats((prev) =>
           prev.map((item) => {
-            if (item.name === "Present Today") {
-              return { ...item, value: presentLabel };
+            if (item.name === "Total Students") {
+              return { ...item, value: String(totalStudents) };
             }
-            if (item.name === "Absent Today") {
-              return { ...item, value: absentLabel };
-            }
-            if (item.name === "Unknown Faces") {
-              return { ...item, value: String(unknownFaces) };
-            }
+            // Total Classes and Total Divisions are already set from defaultQuickStats
             return item;
           })
         );
       } catch (e) {
-        console.error("Failed to load attendance stats:", e);
-        if (!axios.isCancel(e)) {
-          // leave defaults on error
-        }
+        console.error("Failed to load student stats:", e);
+        // leave defaults on error
       }
     })();
 
     return () => {
       mounted = false;
-      controller.abort();
     };
   }, []);
+
+  // Commented out - Previous stats fetching (Present Today, Absent Today, Unknown Faces)
+  // useEffect(() => {
+  //   let mounted = true;
+  //   const controller = new AbortController();
+  //   (async () => {
+  //     try {
+  //       if (!mounted) return;
+  //       const res = await api.getAttendanceStats(undefined, controller);
+  //       const stats = res?.data?.data;
+  //       const total = stats.totalStudents || 0;
+  //       const present = stats.presentStudents ?? 0;
+  //       const absent =
+  //         stats.absentStudents ??
+  //         (total > 0 ? Math.max(total - present, 0) : 0);
+  //       const absentPct =
+  //         total > 0 ? ((absent / total) * 100).toFixed(1) : "0.0";
+  //       const presentPct =
+  //         total > 0 ? ((present / total) * 100).toFixed(1) : "0.0";
+  //       const unknownFaces = Number(stats.unknownFacesToday) || 0;
+
+  //       const presentLabel = `${present} (${presentPct}%)`;
+  //       const absentLabel = `${absent} (${absentPct}%)`;
+  //       setQuickStats((prev) =>
+  //         prev.map((item) => {
+  //           if (item.name === "Present Today") {
+  //             return { ...item, value: presentLabel };
+  //           }
+  //           if (item.name === "Absent Today") {
+  //             return { ...item, value: absentLabel };
+  //           }
+  //           if (item.name === "Unknown Faces") {
+  //             return { ...item, value: String(unknownFaces) };
+  //           }
+  //           return item;
+  //         })
+  //       );
+  //     } catch (e) {
+  //       console.error("Failed to load attendance stats:", e);
+  //       if (!axios.isCancel(e)) {
+  //         // leave defaults on error
+  //       }
+  //     }
+  //   })();
+
+  //   return () => {
+  //     mounted = false;
+  //     controller.abort();
+  //   };
+  // }, []);
 
   return (
     <div
@@ -108,12 +135,14 @@ export function Sidebar({ className }: SidebarProps) {
                 <div className="w-5 h-5 bg-primary-foreground/20 rounded animate-pulse" />
               )}
             </div>
-            <div>
-              <h1 className="text-lg font-semibold">BharathaTechno</h1>
-              <p className="text-xs text-muted-foreground">
-                AI Attendance System
-              </p>
-            </div>
+            <Link href="/" className="cursor-pointer">
+              <div>
+                <h1 className="text-lg font-semibold">BharathaTechno</h1>
+                <p className="text-xs text-muted-foreground">
+                  AI Attendance System
+                </p>
+              </div>
+            </Link>
           </div>
         )}
 
@@ -134,9 +163,9 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Quick Stats */}
       {!isCollapsed && (
         <div className="p-4 space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Today&apos;s Overview
-          </h3>
+          {/* <h3 className="text-sm font-medium text-muted-foreground">
+          Overview
+          </h3> */}
           <div className="space-y-2">
             {quickStats.map((stat) => (
               <div
@@ -156,7 +185,6 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       )}
 
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1 ">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
@@ -207,4 +235,3 @@ export function Sidebar({ className }: SidebarProps) {
     </div>
   );
 }
-
