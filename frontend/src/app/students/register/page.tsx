@@ -31,7 +31,7 @@ export default function RegisterStudentPage() {
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [streamError, setStreamError] = useState<string>("");
   const streamInitializedRef = useRef(false);
-  const [sampleImages, setSampleImages] = useState<string[]>([]);
+  const [sampleImages, ] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     studentId: "",
@@ -360,7 +360,7 @@ export default function RegisterStudentPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [canSubmit, form, capturedBlobs]);
+  }, [canSubmit, form, capturedBlobs, router, stopCamera]);
 
   if (submitting) {
     return <Loader />;

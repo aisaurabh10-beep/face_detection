@@ -13,12 +13,14 @@
     "electron:dev": "electron .",
     "build:win": "npm run build:web && electron-builder --win",
     "build:mac": "npm run build:web && electron-builder --mac",
-    "build:linux": "npm run build:web && electron-builder --linux"
-  },
+    "build:linux": "npm run build:web && electron-builder --linux",
+   "build:prod": "npm run build && rimraf prod-build && mkdir prod-build && cpy .next prod-build/.next --recursive && cpy public prod-build/public --recursive && cpy package.json prod-build/package.json && cpy next.config.ts prod-build/next.config.js --no-error && cpy .env* prod-build/ --no-error"
+},
   "build": {
     "appId": "com.attendance.client",
     "productName": "Attendance App",
     "files": [
+      "out/**/*",
       ".next/**/*",
       "public/**/*",
       "main.js",
@@ -67,11 +69,13 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.0",
     "baseline-browser-mapping": "^2.9.6",
+    "cpy-cli": "^6.0.0",
     "electron": "^39.2.6",
     "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "^15.5.7",
     "postcss": "^8.4.0",
+    "rimraf": "^6.1.2",
     "tailwindcss": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"

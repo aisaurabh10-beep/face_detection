@@ -177,7 +177,7 @@ export default function StudentAttendancePage() {
     const { startDate: defaultStart, endDate: defaultEnd } = getDateRange();
     setStartDate(defaultStart);
     setEndDate(defaultEnd);
-  }, [dateRange]);
+  }, [getDateRange]);
 
   const fetchStudentData = async () => {
     try {
