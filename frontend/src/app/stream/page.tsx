@@ -1,14 +1,24 @@
 "use client";
 
 import StreamPlayer from "@/components/camera/StreamPlayer";
-import { CAMERAS } from "@/lib/constants";
+import { CAMERAS, streamSteps } from "@/lib/constants";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
+import { useTour } from "@/hooks/useTour";
 
 function StreamContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { startTour } = useTour();
   const expand = searchParams.get("expand") === "true";
+
+  useEffect(() => {
+    const tourDone = sessionStorage.getItem("tour_stream_completed");
+    if (!tourDone && !expand) {
+      setTimeout(() => startTour(streamSteps), 1000);
+      sessionStorage.setItem("tour_stream_completed", "true");
+    }
+  }, [startTour, expand]);
 
   useEffect(() => {
     if (!expand) return;
@@ -24,7 +34,7 @@ function StreamContent() {
   }, [expand, router]);
 
   const player = (
-    <div className="w-full h-full">
+    <div id="tour-stream-player" className="w-full h-full">
       <StreamPlayer cameras={CAMERAS} />
     </div>
   );

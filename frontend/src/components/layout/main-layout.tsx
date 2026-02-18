@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
+import "driver.js/dist/driver.css";
 
 interface MainLayoutProps {
   children: React.ReactNode;

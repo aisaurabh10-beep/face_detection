@@ -114,7 +114,10 @@ export function DashboardStats() {
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div> */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div
+        id="tour-stats"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
+      >
         {items.map((stat) => (
           <Card key={stat.title} className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

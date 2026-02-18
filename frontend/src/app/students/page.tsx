@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { PAGE_SIZE } from "@/lib/constants";
+import { PAGE_SIZE, studentsSteps } from "@/lib/constants";
 import { CLASSES, DIVISIONS, getPicUrl } from "@/lib/helper";
 import { Search, UserMinus, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTour } from "@/hooks/useTour";
 
 export default function StudentsPage() {
+  const { startTour } = useTour();
   const [loading, setLoading] = useState(false);
   const [, setErrorMsg] = useState("");
   const [students, setStudents] = useState<any[]>([]);
@@ -56,6 +58,14 @@ export default function StudentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit]);
 
+  useEffect(() => {
+    const tourDone = sessionStorage.getItem("tour_students_completed");
+    if (!tourDone) {
+      setTimeout(() => startTour(studentsSteps), 1000);
+      sessionStorage.setItem("tour_students_completed", "true");
+    }
+  }, [startTour]);
+
   const availableDivisions = useMemo(() => {
     const list = Object.values(DIVISIONS).flat();
     return Array.from(new Set(list));
@@ -65,8 +75,8 @@ export default function StudentsPage() {
     setActionLoading(studentId);
     setStudents((prev) =>
       prev.map((s) =>
-        s._id === studentId ? { ...s, isActive: !s.isActive } : s
-      )
+        s._id === studentId ? { ...s, isActive: !s.isActive } : s,
+      ),
     );
     setActionLoading(null);
   };
@@ -78,7 +88,7 @@ export default function StudentsPage() {
         <p className="text-muted-foreground">
           Manage student registrations and information
         </p>
-        <Link href="/students/register">
+        <Link id="tour-add-student" href="/students/register">
           <Button className="flex items-center gap-2">
             <UserPlus className="h-4 w-4" />
             Add Student
@@ -92,7 +102,10 @@ export default function StudentsPage() {
           <CardTitle>Student Management</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div
+            id="tour-student-filters"
+            className="flex flex-wrap items-center gap-3 mb-4"
+          >
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -187,7 +200,7 @@ export default function StudentsPage() {
           </div>
 
           {/* List */}
-          <div className="overflow-x-auto">
+          <div id="tour-student-list" className="overflow-x-auto">
             <table className="w-full text-sm">
               {students.length ? (
                 <thead>

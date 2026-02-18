@@ -7,7 +7,22 @@ import { formatTime } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 // import { NotificationDropdown } from "@/components/ui/notification-dropdown";
-import { Activity, Clock, Menu, Search, Wifi, WifiOff } from "lucide-react";
+import {
+  Activity,
+  Clock,
+  HelpCircle,
+  Menu,
+  Search,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
+import { useTour } from "@/hooks/useTour";
+import {
+  dashboardSteps,
+  streamSteps,
+  studentsSteps,
+  attendanceSteps,
+} from "@/lib/constants";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -16,6 +31,7 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { isConnected } = useSocket();
+  const { startTour } = useTour();
   const pathname = usePathname();
   const pageName = getPageName(pathname);
 
@@ -89,8 +105,28 @@ export function Header({ onMenuClick }: HeaderProps) {
 
           <div className="hidden sm:flex items-center space-x-1 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="font-mono"> {new Date(currentTime).toLocaleDateString()} - {formatTime(currentTime)}</span>
+            <span className="font-mono">
+              {" "}
+              {new Date(currentTime).toLocaleDateString()} -{" "}
+              {formatTime(currentTime)}
+            </span>
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (pathname === "/dashboard") startTour(dashboardSteps);
+              else if (pathname === "/stream") startTour(streamSteps);
+              else if (pathname === "/students") startTour(studentsSteps);
+              else if (pathname === "/attendance") startTour(attendanceSteps);
+              else startTour(dashboardSteps);
+            }}
+            className="text-muted-foreground hover:text-primary"
+            title="Start Tour"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
 
           {/* Notifications */}
           {/* <NotificationDropdown /> */}

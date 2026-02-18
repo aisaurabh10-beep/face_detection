@@ -48,7 +48,7 @@ export function Sidebar({ className }: SidebarProps) {
             }
             // Total Classes and Total Divisions are already set from defaultQuickStats
             return item;
-          })
+          }),
         );
       } catch (e) {
         console.error("Failed to load student stats:", e);
@@ -113,10 +113,11 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <div
+      id="tour-sidebar"
       className={cn(
         "flex h-full flex-col bg-card border-r transition-all duration-300",
         isCollapsed ? "w-16" : "w-64",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -204,7 +205,7 @@ export function Sidebar({ className }: SidebarProps) {
                 "flex items-center space-x-3 px-2 py-2 rounded-lg text-sm font-medium transition-colors",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
               )}
             >
               <item.icon className="h-4 w-4 flex-shrink-0" />
@@ -221,7 +222,7 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* Footer */}
       {!isCollapsed && (
-        <div className="p-4 border-t">
+        <div id="tour-system-status" className="p-4 border-t">
           <div className="flex items-center space-x-3 p-2 rounded-lg bg-muted/50">
             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full"></div>

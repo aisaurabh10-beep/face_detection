@@ -9,6 +9,8 @@ import { CLASSES, DIVISIONS, getPicUrl } from "@/lib/helper";
 import { ArrowUpDown, Search, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useTour } from "@/hooks/useTour";
+import { attendanceSteps } from "@/lib/constants";
 
 interface AttendanceReport {
   student: {
@@ -46,6 +48,7 @@ type SortOrder = "asc" | "desc";
 
 export default function AttendancePage() {
   const router = useRouter();
+  const { startTour } = useTour();
   const [loading, setLoading] = useState(false);
   const [, setErrorMsg] = useState("");
   const [attendanceData, setAttendanceData] = useState<AttendanceReport[]>([]);
@@ -91,7 +94,7 @@ export default function AttendancePage() {
         const lastMonthStart = new Date(
           now.getFullYear(),
           now.getMonth() - 1,
-          1
+          1,
         );
         const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
         return {
@@ -102,7 +105,7 @@ export default function AttendancePage() {
         const threeMonthsAgo = new Date(
           now.getFullYear(),
           now.getMonth() - 3,
-          1
+          1,
         );
         return {
           startDate: formatDateLocal(threeMonthsAgo),
@@ -171,6 +174,14 @@ export default function AttendancePage() {
     fetchAttendanceData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, dateRange, customStartDate, customEndDate]);
+
+  useEffect(() => {
+    const tourDone = sessionStorage.getItem("tour_attendance_completed");
+    if (!tourDone) {
+      setTimeout(() => startTour(attendanceSteps), 1000);
+      sessionStorage.setItem("tour_attendance_completed", "true");
+    }
+  }, [startTour]);
 
   const sortedData = useMemo(() => {
     const sorted = [...attendanceData].sort((a, b) => {
@@ -250,15 +261,17 @@ export default function AttendancePage() {
             View and analyze student attendance records
           </p>
         </div>
-        <ExportButton
-          filters={filters}
-          dateRange={dateRange}
-          customStartDate={customStartDate}
-          customEndDate={customEndDate}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onError={setErrorMsg}
-        />
+        <div id="tour-export-report">
+          <ExportButton
+            filters={filters}
+            dateRange={dateRange}
+            customStartDate={customStartDate}
+            customEndDate={customEndDate}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onError={setErrorMsg}
+          />
+        </div>
       </div>
 
       {/* Filters */}
@@ -266,7 +279,7 @@ export default function AttendancePage() {
         <CardHeader>
           <CardTitle>Filters & Date Range</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent id="tour-attendance-filters">
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -418,7 +431,7 @@ export default function AttendancePage() {
           </div>
 
           {/* Attendance Table */}
-          <div className="overflow-x-auto">
+          <div id="tour-attendance-list" className="overflow-x-auto">
             <table className="w-full text-sm">
               {sortedData.length ? (
                 <thead>
@@ -476,7 +489,7 @@ export default function AttendancePage() {
                           src={getPicUrl(
                             (report.student.photos &&
                               report.student.photos[0]) ||
-                              ""
+                              "",
                           )}
                           alt=""
                           className="w-10 h-10 object-cover"
